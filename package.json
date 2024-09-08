@@ -1,0 +1,20 @@
+{
+  "name": "buy-zl",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@uniswap/sdk-core": "^5.3.1",
+    "async-mutex": "^0.5.0",
+    "dotenv": "^16.4.5",
+    "pino": "^9.4.0",
+    "pino-pretty": "^11.2.2",
+    "viem": "^2.21.3",
+    "zod": "^3.23.8"
+  }
+}
