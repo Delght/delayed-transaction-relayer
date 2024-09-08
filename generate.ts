@@ -1,12 +1,18 @@
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
-import { writeFileSync } from 'fs';
+import { writeFileSync, existsSync, readFileSync } from 'fs';
 
 interface AddressKeyPair {
   address: string;
   privateKey: string;
 }
 
-export function generateAddressesAndKeys(n: number): void {
+export function generateAddressesAndKeys(n: number): AddressKeyPair[] {
+  if (existsSync('address_key_pairs.json')) {
+    const jsonContent = readFileSync('address_key_pairs.json', 'utf8');
+    const pairs: AddressKeyPair[] = JSON.parse(jsonContent);
+    return pairs;
+  }
+
   const pairs: AddressKeyPair[] = [];
 
   for (let i = 0; i < n; i++) {
@@ -23,6 +29,7 @@ export function generateAddressesAndKeys(n: number): void {
   writeFileSync('address_key_pairs.json', jsonContent);
 
   console.log(`Generated ${n} address-key pairs and saved to address_key_pairs.json`);
+
+  return pairs;
 }
 
-generateAddressesAndKeys(10);
