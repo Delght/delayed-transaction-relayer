@@ -1,11 +1,11 @@
-import type { PrivateKeyAccount, PublicClient, WalletClient } from 'viem';
+import { encodeFunctionData, type PrivateKeyAccount, type PublicClient, type WalletClient } from 'viem';
 import { Mutex } from 'async-mutex';
 import { default as TinyQueue } from 'tinyqueue';
 import { logger } from './logger';
-
+import type { Abi } from 'viem';
 export interface TransactionData {
   address: `0x${string}`,
-  abi: any,
+  abi: Abi,
   functionName: string,
   args: any[],
   value?: bigint,
@@ -39,11 +39,6 @@ interface TrackedTransaction extends QueuedTransaction {
   gasPrice?: bigint;
   submittedAt: bigint;
 }
-
-// interface TransactionReceipt {
-//   transactionHash: `0x${string}`;
-//   status: 'success' | 'reverted';
-// }
 
 export class TransactionManager {
   private queue: TinyQueue<QueuedTransaction>;
@@ -137,22 +132,18 @@ export class TransactionManager {
       });
 
       
-      // Get current block timestamp outside of the mutex block
       currentBlockTimestamp = await this.getCurrentBlockTimestamp();
 
       await this.queueMutex.runExclusive(() => {
         this.removeExpiredTransactions(currentBlockTimestamp);
       });
 
-      // Requeue delayed transactions outside of mutex block
       await this.requeueDelayedTransactions(this.delayedQueue, currentBlockTimestamp);
 
-      // Get transactions to process outside of mutex block
       transactionsToProcess = await this.getTransactionsToProcess();
 
       // Process transactions outside of mutex block
       if (transactionsToProcess.length > 0) {
-        logger.info(`TransactionManager.processQueue: Processing ${transactionsToProcess.length} transactions`);
         logger.info(`TransactionManager.processQueue: Transactions to process: ${transactionsToProcess.map(tx => tx.txData.functionName).join(', ')}`);
         await this.processTransactions(transactionsToProcess);
       }
@@ -214,13 +205,19 @@ export class TransactionManager {
     const currentGasPrice = await this.client.getGasPrice();
     const gasPrice = currentGasPrice + BigInt(Math.floor(Number(currentGasPrice) * 0.1)); // 10% buffer
     const { txHash, receipt } = await this.sendTransaction(txData, walletClient, gasPrice);
-    
-    const nonce = await this.client.getTransactionCount({ address: walletClient.account?.address });
+
+    const nonce = await walletClient.account?.nonceManager?.get({
+      address: walletClient.account?.address,
+      chainId: this.client.chain!.id,
+      client: this.client
+    });
+
+    logger.info(`TransactionManager.submitTransaction: Nonce for account ${walletClient.account?.address}: ${nonce}`);
 
     const trackedTxData = {
       txHash,
       txData,
-      nonce,
+      nonce: BigInt(nonce || 0),
       gasPrice,
     };
 
@@ -400,26 +397,26 @@ private async speedUpTransaction(txHash: `0x${string}`) {
   * @returns The estimated gas limit
   */
   private async estimateGasWithFallback(tx: TransactionData, walletClient: WalletClient) {
-    const defaultGasLimit = BigInt(1000000);
+    const defaultGasLimit = BigInt(1_000_000);
 
-  try {
-      // Estimate gas using the account from the transaction data
-      const gasEstimate = await this.client.estimateGas({
-        ...tx,
-        account: walletClient.account, // Use the account from the transaction data
-      });
+    try {
+        const calldata = encodeFunctionData({ abi: tx.abi, functionName: tx.functionName, args: tx.args });
 
-      // Buffer the gas estimate by 10%
-      const gasLimit = gasEstimate + BigInt(Math.floor(Number(gasEstimate) * 0.1));
+        const gasEstimate = await this.client.estimateGas({
+          to: tx.address,
+          data: calldata,
+          account: walletClient.account, 
+          value: tx.value,
+        });
 
-      // logger.info(`Estimated gas: ${gasEstimate}, Gas limit with buffer: ${gasLimit}`);
-
-      return gasLimit;
-    } catch (error) {
-      logger.error(`Failed to estimate gas: ${error instanceof Error ? error.message : String(error)}`);
-      return defaultGasLimit;
+        const gasLimit = gasEstimate + BigInt(Math.floor(Number(gasEstimate) * 0.1));
+        
+        return gasLimit;
+      } catch (error) {
+        logger.error(`Failed to estimate gas: ${error instanceof Error ? error.message : String(error)}`);
+        return defaultGasLimit;
+      }
     }
-  }
 
   /**
    * Sends a transaction to the chain.
@@ -433,20 +430,22 @@ private async speedUpTransaction(txHash: `0x${string}`) {
     walletClient: WalletClient,
     gasPrice: bigint
   ): Promise<{ txHash: `0x${string}`; receipt: any }> {
-    logger.info(`TransactionManager.sendTransaction: Submitting transaction: ${txData.functionName}`);
-
     const gasLimit = await this.estimateGasWithFallback(txData, walletClient);
+
+    if (!Array.isArray(txData.abi) || txData.abi.length === 0) {
+      throw new Error(`Invalid ABI for function: ${txData.functionName}`);
+    }
 
     const { request } = await this.client.simulateContract({
       ...txData,
+      chain: this.client.chain,
       account: walletClient.account,
       gas: gasLimit,
       gasPrice,
-      value: txData.value,
     });
 
     const txHash = await walletClient.writeContract(request);
-
+  
     logger.info(`TransactionManager.sendTransaction: Transaction sent, txHash: ${txHash}`);
 
     const receipt = await this.client.waitForTransactionReceipt({ hash: txHash });
