@@ -1,44 +1,9 @@
-import { encodeFunctionData, type PrivateKeyAccount, type PublicClient, type WalletClient } from 'viem';
+import TinyQueue from 'tinyqueue';
 import { Mutex } from 'async-mutex';
-import { default as TinyQueue } from 'tinyqueue';
-import { logger } from './logger';
-import type { Abi } from 'viem';
-export interface TransactionData {
-  address: `0x${string}`,
-  abi: Abi,
-  functionName: string,
-  args: any[],
-  value?: bigint,
-}
-
-export interface TransactionWithDeadline {
-  txData: TransactionData,
-  deadline: bigint,
-  notBefore?: bigint; // Optional field to specify the earliest time the transaction can be included
-}
-
-interface TransactionManagerParams {
-  accounts: Array<{ account: PrivateKeyAccount, walletClient: WalletClient }>; 
-  client: PublicClient; 
-  queueInterval?: number;
-  maxRetries?: number;
-  batchSize?: number;
-  monitorPendingTxsInterval?: number;
-}
-
-interface QueuedTransaction extends TransactionWithDeadline {
-  account: PrivateKeyAccount;
-  walletClient: WalletClient;
-  retries: number;
-  gasPrice?: bigint;
-}
-
-interface TrackedTransaction extends QueuedTransaction {
-  txHash: `0x${string}`;
-  nonce: bigint;
-  gasPrice?: bigint;
-  submittedAt: bigint;
-}
+import { encodeFunctionData } from 'viem';
+import { logger } from '@/utils/logger';
+import type { PrivateKeyAccount, PublicClient, WalletClient } from 'viem';
+import type { TransactionData, TransactionWithDeadline, QueuedTransaction, TrackedTransaction, TransactionManagerParams } from '@/types/types';
 
 export class TransactionManager {
   private queue: TinyQueue<QueuedTransaction>;
@@ -56,7 +21,7 @@ export class TransactionManager {
   private readonly delayedQueue: QueuedTransaction[];
 
   constructor(params: TransactionManagerParams) {
-    this.queue = new TinyQueue<QueuedTransaction>([], (a, b) => Number(a.deadline - b.deadline));
+    this.queue = new TinyQueue<QueuedTransaction>([], (a, b) => Number(a.notBefore ?? 0n) - Number(b.notBefore ?? 0n));
     this.accounts = params.accounts;
     this.client = params.client;
     this.queueInterval = params.queueInterval || 1000;

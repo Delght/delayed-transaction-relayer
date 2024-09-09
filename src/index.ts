@@ -1,23 +1,24 @@
 import dotenv from "dotenv";
-import { http, createWalletClient, createPublicClient, http } from "viem";
+import { 
+  http, 
+  createWalletClient, 
+  createPublicClient, 
+  type PrivateKeyAccount 
+} from "viem";
 import { mainnet, sepolia } from "viem/chains";
 import { privateKeyToAccount, nonceManager } from "viem/accounts";
-import type { PrivateKeyAccount } from "viem";
-import { TransactionManager } from "./transaction";
-import { generateAddressesAndKeys } from "./generate";
-import { config } from "./config";
-import { logger } from "./logger";
-import type { TransactionData, TransactionWithDeadline } from './types';
+import { TransactionManager } from "@/modules/transaction";
+import { generateAddressesAndKeys } from "@/utils/generate";
+import { config } from '@/config/config';
+import type { TransactionData, TransactionWithDeadline } from '@/types/types';
 
 const pairs = generateAddressesAndKeys(10);
 
 dotenv.config();
-logger.info(pairs);
-logger.info(config);
 
 const uniswapV2RouterABI = [{"inputs":[{"internalType":"uint256","name":"amountIn","type":"uint256"},{"internalType":"uint256","name":"amountOutMin","type":"uint256"},{"internalType":"address[]","name":"path","type":"address[]"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"deadline","type":"uint256"}],"name":"swapExactTokensForETH","outputs":[{"internalType":"uint256[]","name":"amounts","type":"uint256[]"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"amountOutMin","type":"uint256"},{"internalType":"address[]","name":"path","type":"address[]"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"deadline","type":"uint256"}],"name":"swapExactETHForTokens","outputs":[{"internalType":"uint256[]","name":"amounts","type":"uint256[]"}],"stateMutability":"payable","type":"function"}];
 
-const customHttpTransport = http("https://ethereum-sepolia.blockpi.network/v1/rpc/public");
+const customHttpTransport = http(config.RPC_URL);
 
 const accounts = pairs.map((pair) => {
   const account = privateKeyToAccount(pair.privateKey as `0x${string}`, {
