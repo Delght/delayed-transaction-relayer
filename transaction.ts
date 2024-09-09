@@ -1,8 +1,21 @@
 import type { PrivateKeyAccount, PublicClient, WalletClient } from 'viem';
 import { Mutex } from 'async-mutex';
 import { default as TinyQueue } from 'tinyqueue';
-import type { TransactionData, TransactionWithDeadline } from './types';
 import { logger } from './logger';
+
+export interface TransactionData {
+  address: `0x${string}`,
+  abi: any,
+  functionName: string,
+  args: any[],
+  value?: bigint,
+}
+
+export interface TransactionWithDeadline {
+  txData: TransactionData,
+  deadline: bigint,
+  notBefore?: bigint; // Optional field to specify the earliest time the transaction can be included
+}
 
 interface TransactionManagerParams {
   accounts: Array<{ account: PrivateKeyAccount, walletClient: WalletClient }>; 
@@ -24,6 +37,7 @@ interface TrackedTransaction extends QueuedTransaction {
   txHash: `0x${string}`;
   nonce: bigint;
   gasPrice?: bigint;
+  submittedAt: bigint;
 }
 
 // interface TransactionReceipt {
@@ -37,13 +51,13 @@ export class TransactionManager {
   private readonly client: PublicClient; 
   private readonly queueInterval: number;
   private readonly maxRetries: number;
-  private readonly queueMutex: Mutex;
   private readonly batchSize: number;
+  private readonly queueMutex: Mutex;
+  private readonly monitorPendingTxsInterval: number;
   private readonly trackedTransactions: Map<`0x${string}`, TrackedTransaction>;
   private readonly trackedTransactionsMutex: Mutex;
   private readonly removalSet: Set<`0x${string}`>;
   private readonly removalSetMutex: Mutex;
-  private readonly monitorPendingTxsInterval: number;
   private readonly delayedQueue: QueuedTransaction[];
 
   constructor(params: TransactionManagerParams) {
@@ -78,55 +92,72 @@ export class TransactionManager {
    * @param account The account to associate with the transaction
    */
   public async addTransaction(transactionWithDeadline: TransactionWithDeadline, account: PrivateKeyAccount) {
-    const walletClient = this.getWalletClient(account); // Get the WalletClient for the account
+    const walletClient = this.getWalletClient(account);
     if (!walletClient) {
       throw new Error(`WalletClient not found for account: ${account.address}`);
     }
 
+    const queuedTransaction: QueuedTransaction = {
+      ...transactionWithDeadline,
+      account,
+      walletClient,
+      retries: 0
+    };
+
+    const currentBlockTimestamp = await this.getCurrentBlockTimestamp();
+
     await this.queueMutex.runExclusive(() => {
-      this.queue.push({ ...transactionWithDeadline, account, walletClient, retries: 0 });
-      logger.info(`TransactionManager.addTransaction: Transaction added for account ${account.address}, queue length: ${this.queue.length}`);
+      // If transaction should be delayed, add it to the delayedQueue
+      if (queuedTransaction.notBefore && queuedTransaction.notBefore > currentBlockTimestamp) {
+        this.delayedQueue.push(queuedTransaction);
+        logger.info(`TransactionManager.addTransaction: Transaction added to delayed queue for account ${account.address}, delayed until ${queuedTransaction.notBefore}`);
+      } else {
+        // Otherwise, add it to the main queue
+        this.queue.push(queuedTransaction);
+        logger.info(`TransactionManager.addTransaction: Transaction added for account ${account.address}, queue length: ${this.queue.length}`);
+      }
     });
   }
 
-  /**
-   * Retrieves the WalletClient associated with a given account.
-   * @param account The account to retrieve the WalletClient for.
-   */
-  private getWalletClient(account: PrivateKeyAccount): WalletClient | undefined {
-    const accountInfo = this.accounts.find(acc => acc.account.address === account.address);
-    return accountInfo?.walletClient;
-  }
 
   /**
    * Processes the queue by checking for transactions to process, requeueing delayed transactions, and removing expired transactions.
    * @returns A promise that resolves when the queue is processed
    */
   private async processQueue() {
+    let currentBlockTimestamp: bigint;
+    let transactionsToProcess: QueuedTransaction[] = [];
+
     while (true) {
-      if (this.queue.length === 0 && this.delayedQueue.length === 0) {
-        logger.info('TransactionManager.processQueue: Both main and delayed queues are empty, waiting for transactions to be added');
-        await new Promise((resolve) => setTimeout(resolve, this.queueInterval));
-        continue;
-      }
+      await this.queueMutex.runExclusive(() => {
+        if (this.queue.length === 0 && this.delayedQueue.length === 0) {
+          logger.info('TransactionManager.processQueue: Both main and delayed queues are empty, waiting for transactions to be added');
+          return; // Exit early if both queues are empty
+        }
+      });
 
-      const currentBlockTimestamp = await this.getCurrentBlockTimestamp();
-
-      await this.requeueDelayedTransactions(this.delayedQueue, currentBlockTimestamp);
+      
+      // Get current block timestamp outside of the mutex block
+      currentBlockTimestamp = await this.getCurrentBlockTimestamp();
 
       await this.queueMutex.runExclusive(() => {
         this.removeExpiredTransactions(currentBlockTimestamp);
       });
 
-      if (this.queue.length === 0) {
-        await new Promise((resolve) => setTimeout(resolve, this.queueInterval));
-        continue;
+      // Requeue delayed transactions outside of mutex block
+      await this.requeueDelayedTransactions(this.delayedQueue, currentBlockTimestamp);
+
+      // Get transactions to process outside of mutex block
+      transactionsToProcess = await this.getTransactionsToProcess();
+
+      // Process transactions outside of mutex block
+      if (transactionsToProcess.length > 0) {
+        logger.info(`TransactionManager.processQueue: Processing ${transactionsToProcess.length} transactions`);
+        logger.info(`TransactionManager.processQueue: Transactions to process: ${transactionsToProcess.map(tx => tx.txData.functionName).join(', ')}`);
+        await this.processTransactions(transactionsToProcess);
       }
 
-      const transactionsToProcess: QueuedTransaction[] = await this.getTransactionsToProcess(currentBlockTimestamp);
-
-      await this.processTransactions(transactionsToProcess);
-
+      // Wait before the next iteration
       await new Promise((resolve) => setTimeout(resolve, this.queueInterval));
     }
   }
@@ -142,8 +173,10 @@ export class TransactionManager {
         try {
           const { receipt, trackedTxData } = await this.submitTransaction(txData, walletClient);
 
+          const currentBlockTimestamp = await this.getCurrentBlockTimestamp();
+
           await this.trackedTransactionsMutex.runExclusive(() => {
-            this.trackedTransactions.set(trackedTxData.txHash, { ...trackedTxData, account, walletClient, deadline, retries });
+            this.trackedTransactions.set(trackedTxData.txHash, { ...trackedTxData, account, walletClient, deadline, retries, submittedAt: currentBlockTimestamp, nonce: BigInt(trackedTxData.nonce)});
           });
 
           if (receipt.status === 'reverted') {
@@ -178,58 +211,48 @@ export class TransactionManager {
   private async submitTransaction(txData: TransactionData, walletClient: WalletClient) {
     logger.info(`TransactionManager.submitTransaction: Submitting transaction: ${txData.functionName}`);
 
-    const gasLimit = await this.estimateGasWithFallback(txData);
     const currentGasPrice = await this.client.getGasPrice();
     const gasPrice = currentGasPrice + BigInt(Math.floor(Number(currentGasPrice) * 0.1)); // 10% buffer
-
-    const { request } = await this.client.simulateContract({
-      ...txData,
-      account: walletClient.account,
-      gas: gasLimit,
-      gasPrice,
-    });
-
-    const txHash = await walletClient.writeContract(request);
-
-    logger.info(`TransactionManager.submitTransaction: Transaction sent, txHash: ${txHash}`);
-
-    const receipt = await this.client.waitForTransactionReceipt({ hash: txHash });
+    const { txHash, receipt } = await this.sendTransaction(txData, walletClient, gasPrice);
+    
+    const nonce = await this.client.getTransactionCount({ address: walletClient.account?.address });
 
     const trackedTxData = {
       txHash,
       txData,
-      nonce: BigInt(0), // Example; adjust for your actual nonce handling logic
+      nonce,
       gasPrice,
     };
 
     return { receipt, trackedTxData };
   }
 
-   /**
-   * Gets the current block timestamp.
-   * @returns The current block timestamp as a bigint
-   */
-   private async getCurrentBlockTimestamp(): Promise<bigint> {
-    const block = await this.client.getBlock();
-    return BigInt(block.timestamp);
-  }
-
-    /**
+  /**
    * Requeues delayed transactions that are ready to be processed.
    * @param delayedQueue The queue of delayed transactions
    * @param currentBlockTimestamp The current block timestamp
    * @returns A promise that resolves when the delayed transactions are requeued
    */
-    private async requeueDelayedTransactions(delayedQueue: QueuedTransaction[], currentBlockTimestamp: bigint) {
-      for (let i = 0; i < delayedQueue.length; i++) {
-        const delayedTx = delayedQueue[i];
-        if (delayedTx.notBefore && currentBlockTimestamp >= delayedTx.notBefore) {
+  private async requeueDelayedTransactions(delayedQueue: QueuedTransaction[], currentBlockTimestamp: bigint) {
+    for (let i = 0; i < delayedQueue.length; i++) {
+      const delayedTx = delayedQueue[i];
+      logger.info(`TransactionManager.requeueDelayedTransactions: Requeuing delayed transaction ${delayedTx.txData.functionName}, notBefore: ${delayedTx.notBefore}, currentBlockTimestamp: ${currentBlockTimestamp}`);
+      
+      // Check if the transaction is ready to be requeued based on the current block timestamp
+      if (delayedTx.notBefore && currentBlockTimestamp >= delayedTx.notBefore) {
+        await this.queueMutex.runExclusive(() => {
           this.queue.push(delayedTx);
-          delayedQueue.splice(i, 1);
-          i--;
-          logger.info(`TransactionManager.requeueDelayedTransactions: Moved delayed transaction ${delayedTx.txData.functionName} back to main queue`);
-        }
+        });
+        
+        // Remove the transaction from delayedQueue
+        delayedQueue.splice(i, 1);
+        
+        // Adjust the index after splicing
+        i--;
+  
+        logger.info(`TransactionManager.requeueDelayedTransactions: Moved delayed transaction ${delayedTx.txData.functionName} back to main queue`);
       }
+    }
   }
 
   /**
@@ -248,24 +271,22 @@ export class TransactionManager {
    * @param currentBlockTimestamp The current block timestamp
    * @returns An array of transactions to process
    */
-  private async getTransactionsToProcess(currentBlockTimestamp: bigint): Promise<QueuedTransaction[]> {
+  private async getTransactionsToProcess(): Promise<QueuedTransaction[]> {
     const transactionsToProcess: QueuedTransaction[] = [];
+    
     await this.queueMutex.runExclusive(() => {
       while (this.queue.length > 0 && transactionsToProcess.length < this.batchSize) {
         const nextTx = this.queue.pop();
-        if (nextTx?.notBefore && currentBlockTimestamp < nextTx.notBefore) {
-          this.delayedQueue.push(nextTx);
-          logger.info(`TransactionManager.getTransactionsToProcess: Skipping ${nextTx.txData.functionName} - too early to submit. Added to delayed queue.`);
-        } else if (nextTx) {
+
+        if (nextTx) {
           transactionsToProcess.push(nextTx);
         }
 
-        // TODO: implement logic to remove transactions if they are in the removalSet
-        // if (!this.removalSet.has(nextTx.txData.hash)) {
-        //   transactionsToProcess.push(nextTx);
+        // if (this.removalSet.has(nextTx.txData.txHash)) {
+        //   this.removalSet.delete(nextTx.txData.txHash); // Remove from the removalSet after skipping
+        //   logger.info(`TransactionManager.getTransactionsToProcess: Skipping removed transaction: ${nextTx.txData.txHash}`);
         // } else {
-        //   this.removalSet.delete(nextTx.txData.hash);
-        //   logger.info(`TransactionManager.processQueue: Skipping removed transaction: ${nextTx.txData.hash}`);
+        //   transactionsToProcess.push(nextTx);
         // }
       }
     });
@@ -273,7 +294,8 @@ export class TransactionManager {
     return transactionsToProcess;
   }
 
-  /**
+
+/**
  * Monitors pending transactions to check their status and take action if necessary.
  * This method is run in a loop with a delay between each iteration.
  */
@@ -292,9 +314,9 @@ private async monitorPendingTxs() {
             const trackedTx = this.trackedTransactions.get(txHash);
 
             if (trackedTx) {
-              // Example logic to check whether to speed up or drop transaction
-              const shouldSpeedUp = /* Logic to check if transaction is taking too long */;
-              const shouldDrop = /* Logic to check if transaction has exceeded retry limit */;
+              const timeElapsed = Date.now() - Number(trackedTx.submittedAt); 
+              const shouldSpeedUp = timeElapsed > 300000; // 5 minutes
+              const shouldDrop = trackedTx.retries > this.maxRetries; 
 
               if (shouldSpeedUp) {
                 await this.speedUpTransaction(txHash);
@@ -351,7 +373,6 @@ private async speedUpTransaction(txHash: `0x${string}`) {
    * @param txHash The hash of the transaction to drop
    * @returns A promise that resolves when the transaction is dropped
    */
-  // TODO: should replace the transaction with a new one with higher gas price
   private async dropTransaction(txHash: `0x${string}`) {
     await this.trackedTransactionsMutex.runExclusive(() => {
       this.trackedTransactions.delete(txHash); // Delete the transaction from trackedTransactions
@@ -368,55 +389,97 @@ private async speedUpTransaction(txHash: `0x${string}`) {
    * Handles transaction reverts.
    * @param txHash The hash of the reverted transaction
    */
-  // TODO: handle specific revert reasons
   private async handleTxRevert(txHash: `0x${string}`) {
     logger.error(`TransactionManager.handleTxRevert: Transaction ${txHash} reverted`);
   }
 
+  
   /**
-   * Estimates gas for a transaction.
-   * @param tx The transaction data
-   * @returns The estimated gas limit
-   */
-  // TODO: investigate why this is failing with timeout error
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private async estimateGasWithFallback(__tx: TransactionData) {
+  * Estimates gas for a transaction.
+  * @param tx The transaction data
+  * @returns The estimated gas limit
+  */
+  private async estimateGasWithFallback(tx: TransactionData, walletClient: WalletClient) {
     const defaultGasLimit = BigInt(1000000);
 
-    // try {
-    //   // Estimate gas
-    //   const gasEstimate = await this.client.estimateGas({
-    //     ...tx,
-    //     account: this.account,
-    //   });
+  try {
+      // Estimate gas using the account from the transaction data
+      const gasEstimate = await this.client.estimateGas({
+        ...tx,
+        account: walletClient.account, // Use the account from the transaction data
+      });
 
-    //   // Add a buffer to the gas estimate
-    //   const gasLimit = gasEstimate + BigInt(Math.floor(Number(gasEstimate) * 0.1));
+      // Buffer the gas estimate by 10%
+      const gasLimit = gasEstimate + BigInt(Math.floor(Number(gasEstimate) * 0.1));
 
-    //   logger.info(`Estimated gas: ${ gasEstimate }, Gas limit with buffer: ${ gasLimit }, Default gas limit: ${ defaultGasLimit } `);
+      // logger.info(`Estimated gas: ${gasEstimate}, Gas limit with buffer: ${gasLimit}`);
 
-    //   return gasLimit;
-    // } catch (error) {
-    //   if (error instanceof Error) {
-    //     logger.error(`Failed to estimate gas: ${ error.message } `);
-    //   } else {
-    //     logger.error(`Failed to estimate gas: ${ String(error) } `);
-    //   }
-    //   return defaultGasLimit;
-    // }
+      return gasLimit;
+    } catch (error) {
+      logger.error(`Failed to estimate gas: ${error instanceof Error ? error.message : String(error)}`);
+      return defaultGasLimit;
+    }
+  }
 
-    return defaultGasLimit;
+  /**
+   * Sends a transaction to the chain.
+   * @param txData The transaction data
+   * @param walletClient The WalletClient to use for submitting the transaction
+   * @param gasPrice The gas price to use for the transaction
+   * @returns The transaction hash and receipt
+   */
+  private async sendTransaction(
+    txData: TransactionData,
+    walletClient: WalletClient,
+    gasPrice: bigint
+  ): Promise<{ txHash: `0x${string}`; receipt: any }> {
+    logger.info(`TransactionManager.sendTransaction: Submitting transaction: ${txData.functionName}`);
+
+    const gasLimit = await this.estimateGasWithFallback(txData, walletClient);
+
+    const { request } = await this.client.simulateContract({
+      ...txData,
+      account: walletClient.account,
+      gas: gasLimit,
+      gasPrice,
+      value: txData.value,
+    });
+
+    const txHash = await walletClient.writeContract(request);
+
+    logger.info(`TransactionManager.sendTransaction: Transaction sent, txHash: ${txHash}`);
+
+    const receipt = await this.client.waitForTransactionReceipt({ hash: txHash });
+    return { txHash, receipt };
+  }
+
+
+  /**
+   * Retrieves the WalletClient associated with a given account.
+   * @param account The account to retrieve the WalletClient for.
+   */
+  private getWalletClient(account: PrivateKeyAccount): WalletClient | undefined {
+    const accountInfo = this.accounts.find(acc => acc.account.address === account.address);
+    return accountInfo?.walletClient;
+  }
+
+  /**
+   * Gets the current block timestamp.
+   * @returns The current block timestamp as a bigint
+   */
+  private async getCurrentBlockTimestamp(): Promise<bigint> {
+    const block = await this.client.getBlock();
+    return BigInt(block.timestamp);
   }
 
   /**
    * Handles transaction errors by logging the error message.
    * @param error 
-  */
-  // TODO: handle specific transaction errors
+   */
   private async handleTxError(error: unknown) {
     if (error instanceof Error) {
       logger.error(`TransactionManager.handleTxError: Failed to process transaction: ${error.message}`);
-    } else {
+      } else {
       logger.error(`TransactionManager.handleTxError: Failed to process transaction: ${String(error)}`);
     }
   }

@@ -3,6 +3,7 @@ export interface TransactionData {
     abi: any,
     functionName: string,
     args: any[],
+    value?: bigint,
   }
   
 export interface TransactionWithDeadline {
