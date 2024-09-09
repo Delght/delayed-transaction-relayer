@@ -32,9 +32,9 @@ interface TrackedTransaction extends QueuedTransaction {
 // }
 
 export class TransactionManager {
+  private queue: TinyQueue<QueuedTransaction>;
   private readonly accounts: Array<{ account: PrivateKeyAccount, walletClient: WalletClient }>; 
   private readonly client: PublicClient; 
-  private queue: TinyQueue<QueuedTransaction | undefined>;
   private readonly queueInterval: number;
   private readonly maxRetries: number;
   private readonly queueMutex: Mutex;
@@ -47,6 +47,7 @@ export class TransactionManager {
   private readonly delayedQueue: QueuedTransaction[];
 
   constructor(params: TransactionManagerParams) {
+    this.queue = new TinyQueue<QueuedTransaction>([], (a, b) => Number(a.deadline - b.deadline));
     this.accounts = params.accounts;
     this.client = params.client;
     this.queueInterval = params.queueInterval || 1000;
@@ -65,7 +66,6 @@ export class TransactionManager {
    * Initializes the TransactionManager by starting the processQueue and monitorPendingTxs methods.
    */
   public async initialize() {
-    this.queue = new TinyQueue<QueuedTransaction>([], (a, b) => Number(a.deadline - b.deadline));
     logger.info('TransactionManager: initialized');
 
     this.processQueue();
@@ -421,3 +421,5 @@ private async speedUpTransaction(txHash: `0x${string}`) {
     }
   }
 }
+
+
