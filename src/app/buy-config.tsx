@@ -4,15 +4,15 @@ import useAppConfig from './hooks/useAppConfig';
 import BuyAccountRow from './components/BuyAccountRow';
 import Input from './components/Input';
 import { useEffect, useMemo, useState } from 'react';
-import { randomNumber } from '../utils/function';
-import { SubAccountWithAmount } from './type';
+import { generateShortId, randomNumber } from '../utils/function';
+import { BuyParam, SubAccountWithAmount } from './type';
 import BigNumber from 'bignumber.js';
 import { parseEther } from 'viem';
 
 const minDefault = 0.005;
 const maxDefault = 0.01;
 
-export default function BuyConfig({ onPrev }: { onPrev: () => void }) {
+export default function BuyConfig({ onPrev, onNext }: { onPrev: () => void, onNext: (buyParams: BuyParam[]) => void }) {
   const { subAccounts, tokenInfo, handleBuy } = useAppConfig();
   const [minEth, setMinEth] = useState(`${minDefault}`);
   const [maxEth, setMaxEth] = useState(`${maxDefault}`);
@@ -62,18 +62,22 @@ export default function BuyConfig({ onPrev }: { onPrev: () => void }) {
   };
 
   const onBuy = async () => {
-    await handleBuy(
-      subAccountsWithAmountLocal.map(account => ({
+    const buyParams = subAccountsWithAmountLocal.map(account => {
+      return {
+        id: generateShortId(),
         address: account.address,
         ethToSwap: parseEther(account.amount),
-      }))
-    );
+      };
+    })
+
+    await handleBuy(buyParams);
+    onNext(buyParams);
   };
 
   return (
     <div className="w-full flex flex-col justify-center items-center">
       <h1 className="text-4xl font-bold text-center text-[rgb(252,114,255)]">
-        Buy Token
+        Mua token
       </h1>
       <div
         className="mt-[10px] text-[rgba(252,114,255,0.9)] cursor-pointer"
@@ -81,17 +85,17 @@ export default function BuyConfig({ onPrev }: { onPrev: () => void }) {
           onPrev();
         }}
       >
-        Back to prev step
+        Quay lại bước trước đó
       </div>
       <div className="mt-[20px] w-full max-w-[1200px] flex items-center gap-[20px]">
         <Input
-          title="Min ETH to buy:"
+          title="Số lượng ETH tối thiểu dùng để mua:"
           value={minEth}
           placeholder="0"
           onChange={e => setMinEth(e.target.value)}
         />
         <Input
-          title="Max ETH to buy:"
+          title="Số lượng ETH tối đa dùng để mua:"
           value={maxEth}
           placeholder="0"
           onChange={e => setMaxEth(e.target.value)}
@@ -99,15 +103,15 @@ export default function BuyConfig({ onPrev }: { onPrev: () => void }) {
       </div>
       <div className="mt-[30px] flex flex-col w-full max-w-[1200px] border-2">
         <div className={classNames('flex items-center')}>
-          <div className="w-[25%] p-[10px] font-bold">Sub Account</div>
+          <div className="w-[25%] p-[10px] font-bold">Ví phụ</div>
           <div className="w-[25%] border-l-2 p-[10px] font-bold">
-            ETH Balance
+            Số dự ETH
           </div>
           <div className="w-[25%] border-l-2 p-[10px] font-bold">
-            {tokenInfo.symbol} Balance
+            Số dư {tokenInfo.symbol}
           </div>
           <div className="w-[25%] border-l-2 p-[10px] font-bold">
-            Amount ETH to buy
+            Số lượng ETH mua
           </div>
         </div>
         {subAccountsWithAmountLocal.map(account => (
@@ -124,7 +128,7 @@ export default function BuyConfig({ onPrev }: { onPrev: () => void }) {
           onBuy();
         }}
       >
-        Buy
+        Mua
       </Button>
     </div>
   );

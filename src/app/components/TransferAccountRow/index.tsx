@@ -39,7 +39,7 @@ export default function TransferAccountRow({
       <div className="w-[25%] h-full border-l-2">
         <input
           className="w-full h-full px-[10px] outline-none"
-          placeholder="Enter amount here"
+          placeholder="Nhập số lượng (có thể bỏ trống)"
           value={value.native}
           disabled={disabled}
           onChange={e => onChange({ ...value, native: e.target.value })}

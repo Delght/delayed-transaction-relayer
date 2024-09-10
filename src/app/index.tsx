@@ -3,7 +3,7 @@ import Config from './config';
 import ImportSubAccounts from './import-sub-accounts';
 import { AddressKeyPair } from '../utils/generate';
 import TransferBalance from './transfer-balance';
-import { BuyParams, SubAccount, TokenInfo } from './type';
+import { BuyParam, SubAccount, TokenInfo } from './type';
 import { AppContext } from './context';
 import ChooseMethod from './choose-method';
 import BuyConfig from './buy-config';
@@ -14,6 +14,7 @@ import Loading from './components/Loading';
 import { TransactionManager } from '../modules/transaction/transaction';
 import { privateKeyToAccount, nonceManager } from 'viem/accounts';
 import { UniswapV2 } from '../modules/trading/uniswapV2';
+import BuyMonitor from './buy-monitor';
 
 enum Step {
   Config = 'config',
@@ -22,6 +23,7 @@ enum Step {
   ChooseMethod = 'choose-method',
   Buy = 'buy',
   Sell = 'sell',
+  BuyMonitor = 'buy-monitor',
 }
 
 export default function App() {
@@ -41,6 +43,9 @@ export default function App() {
 
   const [subAccountsKey, setSubAccountsKey] = useState<AddressKeyPair[]>([]);
   const [subAccounts, setSubAccounts] = useState<SubAccount[]>([]);
+  const [buyMonitors, setBuyMonitors] = useState<BuyParam[]>([]);
+
+  console.log(buyMonitors);
 
   const getBalances = useCallback(async () => {
     if (!tokenInfo || !subAccountsKey.length) {
@@ -112,21 +117,22 @@ export default function App() {
   console.log({ tradingModule });
 
   const handleBuy = useCallback(
-    async (accounts: BuyParams[]) => {
+    async (buyParams: BuyParam[]) => {
       if (!tradingModule) {
         throw new Error('Trading module is not initialized');
       }
 
-      const accountsBuy = accounts.map(account => {
+      const accountsBuy = buyParams.map(buyParam => {
         const privateKey = subAccountsKey.find(
-          pair => pair.address === account.address
+          pair => pair.address === buyParam.address
         )?.privateKey;
         if (!privateKey) {
           throw new Error('Private key not found');
         }
         return {
+          id: buyParam.id,
           account: privateKeyToAccount(privateKey, { nonceManager }),
-          ethToSwap: account.ethToSwap,
+          ethToSwap: buyParam.ethToSwap,
         };
       });
 
@@ -141,6 +147,7 @@ export default function App() {
         mainAccount,
         subAccounts,
         tokenInfo,
+        buyMonitors,
         reloadBalance: getBalances,
         handleBuy,
       }}
@@ -195,8 +202,15 @@ export default function App() {
               onPrev={() => {
                 setStep(Step.ChooseMethod);
               }}
+              onNext={buyParams => {
+                setBuyMonitors(buyParams);
+                setStep(Step.BuyMonitor);
+              }}
             />
           )}
+          {step === Step.BuyMonitor && <BuyMonitor onPrev={() => {
+            setStep(Step.Config);
+          }} />}
           {step === Step.Sell && (
             <SellConfig
               onPrev={() => {

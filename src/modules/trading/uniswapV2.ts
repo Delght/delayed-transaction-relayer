@@ -5,14 +5,20 @@ import {
   ERC20_ABI,
   MAX_UINT256,
 } from '../../config/constants';
-import type { TransactionData, TransactionWithDeadline } from '../../types/types';
+import type {
+  TransactionData,
+  TransactionWithDeadline,
+} from '../../types/types';
 import { TransactionManager } from '../../modules/transaction/transaction';
 
 export class UniswapV2 {
   private transactionManager: TransactionManager;
-  private tokenAddress: `0x${string}`
+  private tokenAddress: `0x${string}`;
 
-  constructor(transactionManager: TransactionManager, tokenAddress: `0x${string}`) {
+  constructor(
+    transactionManager: TransactionManager,
+    tokenAddress: `0x${string}`
+  ) {
     this.transactionManager = transactionManager;
     this.tokenAddress = tokenAddress;
   }
@@ -65,29 +71,32 @@ export class UniswapV2 {
     });
   }
 
-  public executeBuys(accounts: { account: PrivateKeyAccount, ethToSwap: bigint }[]) {
+  public executeBuys(
+    buyParams: { id: string; account: PrivateKeyAccount; ethToSwap: bigint }[]
+  ) {
     const now = BigInt(Math.floor(Date.now() / 1000));
     const deadline = now + BigInt(900);
-    
+
     const minTokensOut = BigInt(0);
 
-    accounts.forEach(acc => {
+    buyParams.forEach(buyParam => {
       const txData: TransactionWithDeadline = {
         txData: this.createUniswapTxData(
           'swapExactETHForTokensSupportingFeeOnTransferTokens',
           [
             minTokensOut,
             [config.WETH_ADDRESS, this.tokenAddress],
-            acc.account.address,
+            buyParam.account.address,
             deadline,
           ],
-          acc.ethToSwap
+          buyParam.ethToSwap
         ),
         deadline,
+        id: buyParam.id,
         notBefore: now,
       };
 
-      this.addTransactionWithDeadline(txData, acc.account);
+      this.addTransactionWithDeadline(txData, buyParam.account);
     });
   }
 

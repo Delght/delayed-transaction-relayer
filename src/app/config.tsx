@@ -53,14 +53,14 @@ export default function Config({
   return (
     <div className="w-full flex flex-col justify-center items-center">
       <h1 className="text-4xl font-bold text-center text-[rgb(252,114,255)]">
-        Config
+        Cấu hình
       </h1>
       <div className='mt-[30px] w-full flex justify-center'>
         <Input
           value={privateKey}
-          title="Private Key Main Account:"
+          title="Private key account chính:"
           onChange={e => setPrivateKey(e.target.value)}
-          placeholder="Enter Private Key Main Account"
+          placeholder="Nhập private key"
         />
       </div>
       <div className='mt-[30px] w-full flex justify-center'>
@@ -68,7 +68,7 @@ export default function Config({
           value={tokenAddress}
           title='Token Address:'
           onChange={e => setTokenAddress(e.target.value)}
-          placeholder="Enter Token Address"
+          placeholder="Nhập token address"
         />
       </div>
       <div className='mt-[30px] w-full flex justify-center'>
@@ -76,7 +76,7 @@ export default function Config({
           title='Token Symbol:'
           value={tokenSymbol}
           onChange={e => setTokenSymbol(e.target.value)}
-          placeholder="Enter Token Symbol"
+          placeholder="Nhập token symbol"
         />
       </div>
       <div className='mt-[30px] w-full flex justify-center'>
@@ -84,7 +84,7 @@ export default function Config({
           title='Token Decimals:'
           value={tokenDecimals}
           onChange={e => setTokenDecimals(e.target.value)}
-          placeholder="Enter Token Decimals"
+          placeholder="Nhập token decimals"
         />
       </div>
       <Button
@@ -97,7 +97,7 @@ export default function Config({
         }
         onClick={() => handleNext()}
       >
-        Next step
+        Bước tiếp theo
       </Button>
     </div>
   );

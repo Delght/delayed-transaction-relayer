@@ -66,13 +66,13 @@ export default function ImportSubAccounts({
   return (
     <div className="w-full flex flex-col justify-center items-center">
       <h1 className="text-4xl font-bold text-center text-[rgb(252,114,255)]">
-          Import sub accounts
-        </h1>
+        Nhập danh sách ví phụ  
+      </h1>
       <h2 className="mt-[20px] text-xl font-bold text-center">
-        Main account: {mainAccount.address}
+        Ví chính: {mainAccount.address}
       </h2>
       <div className="mt-[10px] text-lg flex items-center">
-        Balance:{' '}
+        Số dư:{' '}
         {!loadingMainAccountBalance ? (
           renderTokenAmount(mainAccountBalance.balance)
         ) : (
@@ -81,7 +81,7 @@ export default function ImportSubAccounts({
         ETH
       </div>
       <div className="text-lg flex items-center">
-        {tokenInfo.symbol} Balance:{' '}
+        Số dư {tokenInfo.symbol}:{' '}
         {!loadingMainAccountBalance ? (
           renderTokenAmount(mainAccountBalance.balanceToken)
         ) : (
@@ -93,10 +93,10 @@ export default function ImportSubAccounts({
       <div className='mt-[10px] text-[rgba(252,114,255,0.9)] cursor-pointer' onClick={() => {
         onPrev()
       }}>
-        Back to prev step
+        Quay lại bước trước đó
       </div>
       {subAccountsLocal.length > 0 && <div className="mt-[20px] mb-[20px]">
-        <p>Sub Accounts</p>
+        <p>Danh sách ví phụ:</p>
         {subAccountsLocal.map((account: AddressKeyPair) => (
           <p key={account.address}>- {account.address}</p>
         ))}
@@ -107,9 +107,9 @@ export default function ImportSubAccounts({
           handleGenerateSubAccounts();
         }}
       >
-        1. Generate Sub Accounts (Skip if exists)
+        1. Tạo ngẫu nhiên ví phụ (Bỏ qua bước 1 nếu đã có)
       </Button>
-      <Button htmlFor="sub-accounts">2. Import Sub Accounts</Button>
+      <Button htmlFor="sub-accounts">2. Nhập file ví phụ</Button>
       <input
         accept=".json"
         type="file"
@@ -123,7 +123,7 @@ export default function ImportSubAccounts({
         }}
         disabled={subAccountsLocal.length === 0}
       >
-        3. Next step
+        3. Bước tiếp theo
       </Button>
     </div>
   );

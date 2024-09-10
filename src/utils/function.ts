@@ -1,7 +1,7 @@
 export const isPrivateKey = (privateKey: string) => {
   const reg = /^(0x)?[a-fA-F0-9]{64}$/;
   return reg.test(privateKey);
-}
+};
 
 export const numberWithCommas = (num: any, rounding?: number): string => {
   let newNum: string = `${num}`;
@@ -76,9 +76,9 @@ export const renderTokenAmount = (
 };
 
 export const getContentFile = async (file: any) => {
-  return new Promise<string>((resolve) => {
+  return new Promise<string>(resolve => {
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = e => {
       const content = e.target?.result;
       if (typeof content === 'string') {
         resolve(content);
@@ -86,7 +86,7 @@ export const getContentFile = async (file: any) => {
     };
     reader.readAsText(file);
   });
-}
+};
 
 export const parseJSON = (content: string) => {
   try {
@@ -95,17 +95,38 @@ export const parseJSON = (content: string) => {
     console.error(error);
     return null;
   }
-}
-
+};
 
 export function ellipsisAddress(
   address: string = '',
   prefixLength = 4,
   suffixLength = 4
 ) {
-  return `${address.substr(0, prefixLength)}...${address.substr(address?.length - suffixLength, suffixLength)}`
+  return `${address.substr(0, prefixLength)}...${address.substr(
+    address?.length - suffixLength,
+    suffixLength
+  )}`;
 }
 
-export const randomNumber = (min: number, max:number) => {
+export const randomNumber = (min: number, max: number) => {
   return Math.random() * (max - min) + min;
-}
+};
+
+export const generateShortId = (length: number = 10) => {
+  const characters =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+};
+
+export const viewTransaction = (hash: string, chainId?: number) => {
+  if (chainId === 1) {
+    window.open(`https://etherscan.io/tx/${hash}`, '_blank');
+  } else {
+    window.open(`https://sepolia.etherscan.io/tx/${hash}`, '_blank');
+  }
+};

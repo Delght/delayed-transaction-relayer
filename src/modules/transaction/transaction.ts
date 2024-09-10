@@ -4,6 +4,7 @@ import { encodeFunctionData } from 'viem';
 import { logger } from '../../utils/logger';
 import type { PrivateKeyAccount, PublicClient, WalletClient } from 'viem';
 import type { TransactionData, TransactionWithDeadline, QueuedTransaction, TrackedTransaction, TransactionManagerParams } from '../../types/types';
+import Observer from '../../utils/observer';
 
 export class TransactionManager {
   private queue: TinyQueue<QueuedTransaction>;
@@ -125,9 +126,10 @@ export class TransactionManager {
    */
   private async processTransactions(transactionsToProcess: QueuedTransaction[]) {
     await Promise.allSettled(
-      transactionsToProcess.map(async ({ txData, account, walletClient, deadline, retries }) => {
+      transactionsToProcess.map(async ({ txData, account, walletClient, deadline, retries, id }) => {
         try {
           const { receipt, trackedTxData } = await this.submitTransaction(txData, walletClient);
+          id && Observer.emit(id, receipt.transactionHash);
 
           const currentBlockTimestamp = await this.getCurrentBlockTimestamp();
 
@@ -152,6 +154,7 @@ export class TransactionManager {
             });
           } else {
             logger.warn(`TransactionManager.processTransactions: Max retries reached for account ${account.address}, function: ${txData.functionName}`);
+            id && Observer.emit(id, 'failed');
           }
         }
       })

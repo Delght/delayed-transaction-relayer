@@ -18,6 +18,7 @@
     "boxicons": "^2.1.4",
     "classnames": "^2.5.1",
     "crypto-js": "^4.2.0",
+    "events": "^3.3.0",
     "framer-motion": "^11.3.31",
     "pino": "^9.4.0",
     "react": "^18.3.1",

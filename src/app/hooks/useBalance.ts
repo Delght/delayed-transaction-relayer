@@ -13,7 +13,7 @@ export type AccountBalance = {
 
 export default function useBalance(userAddress: `0x${string}`) {
   const { tokenInfo } = useAppConfig();
-  const { data: balanceData, isLoading } = useQuery({
+  const { data: balanceData, isLoading, refetch } = useQuery({
     enabled: !!tokenInfo && !!tokenInfo?.address && !!userAddress,
     queryKey: ['balance', userAddress, tokenInfo.address],
     queryFn: async ({ queryKey }) => {
@@ -63,5 +63,6 @@ export default function useBalance(userAddress: `0x${string}`) {
   return {
     data,
     isLoading,
+    refetch,
   };
 }

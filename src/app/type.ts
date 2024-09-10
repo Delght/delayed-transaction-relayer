@@ -10,11 +10,13 @@ export type AppContextType = {
   mainAccount: AddressKeyPair;
   subAccounts: SubAccount[];
   tokenInfo: TokenInfo;
+  buyMonitors: BuyParam[];
   reloadBalance: () => Promise<any>;
-  handleBuy: (accounts: BuyParams[]) => Promise<void>;
+  handleBuy: (accounts: BuyParam[]) => Promise<void>;
 };
 
-export type BuyParams = {
+export type BuyParam = {
+  id: string;
   address: `0x${string}`;
   ethToSwap: bigint;
 };

@@ -111,13 +111,13 @@ export default function TransferBalance({
   return (
     <div className="w-full flex flex-col justify-center items-center">
       <h1 className="text-4xl font-bold text-center text-[rgb(252,114,255)]">
-        Transfer balance to sub accounts
+        Chuyển ETH sang ví phụ
       </h1>
       <h2 className="mt-[20px] text-xl font-bold text-center">
-        Main account: {mainAccount.address}
+        Ví chính: {mainAccount.address}
       </h2>
       <div className="mt-[10px] text-lg flex items-center">
-        Balance:{' '}
+        Số dư:{' '}
         {!loadingMainAccountBalance ? (
           renderTokenAmount(mainAccountBalance.balance)
         ) : (
@@ -126,7 +126,7 @@ export default function TransferBalance({
         ETH
       </div>
       <div className="text-lg flex items-center">
-        {tokenInfo.symbol} Balance:{' '}
+        Số dư {tokenInfo.symbol}:{' '}
         {!loadingMainAccountBalance ? (
           renderTokenAmount(mainAccountBalance.balanceToken)
         ) : (
@@ -140,19 +140,19 @@ export default function TransferBalance({
           onPrev();
         }}
       >
-        Back to prev step
+        Quay lại bước trước đó
       </div>
       <div className="mt-[20px] flex flex-col w-full max-w-[1200px] border-2">
         <div className={classNames('flex items-center')}>
-          <div className="w-[25%] p-[10px] font-bold">Sub Account</div>
+          <div className="w-[25%] p-[10px] font-bold">Ví phụ</div>
           <div className="w-[25%] border-l-2 p-[10px] font-bold">
-            ETH Balance
+            Số dư ETH
           </div>
           <div className="w-[25%] border-l-2 p-[10px] font-bold">
-            {tokenInfo.symbol} Balance
+            Số dư {tokenInfo.symbol}
           </div>
           <div className="w-[25%] border-l-2 p-[10px] font-bold">
-            ETH to transfer
+            Số lương ETH chuyển
           </div>
           {/* <div className="w-[25%] border-l-2 p-[10px] font-bold">
             {tokenInfo.symbol} to transfer
@@ -192,7 +192,7 @@ export default function TransferBalance({
           handleTransfer();
         }}
       >
-        Transfer Balance ({renderTokenAmount(formatData.totalNative)} ETH)
+        Chuyển ETH sang ví phụ ({renderTokenAmount(formatData.totalNative)} ETH)
         {/* {renderTokenAmount(formatData.totalToken)} {tokenInfo.symbol}) */}
       </Button>
       <Button
@@ -201,7 +201,7 @@ export default function TransferBalance({
         }}
         disabled={loading}
       >
-        Next step
+        Bước tiếp theo
       </Button>
     </div>
   );

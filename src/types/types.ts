@@ -9,6 +9,7 @@ export interface TransactionData {
 }
 
 export interface TransactionWithDeadline {
+  id?: string;
   txData: TransactionData,
   deadline: bigint,
   notBefore?: bigint;
