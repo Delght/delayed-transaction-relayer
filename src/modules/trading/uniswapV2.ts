@@ -56,7 +56,7 @@ export class UniswapV2 {
     this.transactionManager.addTransaction(txWithDeadline, account);
   }
 
-  public lazyApprove(accounts: { account: PrivateKeyAccount }[]) {
+  public lazyApprove(accounts: { id: string, account: PrivateKeyAccount }[]) {
     accounts.forEach(accountPair => {
       const txData: TransactionWithDeadline = {
         txData: this.createERC20TxData('approve', [
@@ -65,6 +65,7 @@ export class UniswapV2 {
         ]),
         deadline: BigInt(Math.floor(Date.now() / 1000) + 900),
         notBefore: BigInt(Math.floor(Date.now() / 1000)),
+        id: accountPair.id,
       };
 
       this.addTransactionWithDeadline(txData, accountPair.account);
@@ -101,30 +102,34 @@ export class UniswapV2 {
   }
 
   public executeSells(
-    accounts: { account: PrivateKeyAccount }[],
-    amountToSell: bigint
+    sellParams: {
+      id: string;
+      account: PrivateKeyAccount;
+      amountToSell: bigint;
+    }[]
   ) {
     const now = BigInt(Math.floor(Date.now() / 1000));
     const deadline = now + BigInt(900);
     const minEthOut = BigInt(0); // TODO: slippage protection
 
-    accounts.forEach(accountPair => {
+    sellParams.forEach(sellParam => {
       const txData: TransactionWithDeadline = {
         txData: this.createUniswapTxData(
           'swapExactTokensForETHSupportingFeeOnTransferTokens',
           [
-            amountToSell,
+            sellParam.amountToSell,
             minEthOut,
             [this.tokenAddress, config.WETH_ADDRESS],
-            accountPair.account.address,
+            sellParam.account.address,
             deadline,
           ]
         ),
+        id: sellParam.id,
         deadline,
         notBefore: now,
       };
 
-      this.addTransactionWithDeadline(txData, accountPair.account);
+      this.addTransactionWithDeadline(txData, sellParam.account);
     });
   }
 }

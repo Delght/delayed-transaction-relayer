@@ -3,7 +3,14 @@ import Config from './config';
 import ImportSubAccounts from './import-sub-accounts';
 import { AddressKeyPair } from '../utils/generate';
 import TransferBalance from './transfer-balance';
-import { BuyParam, SubAccount, TokenInfo } from './type';
+import {
+  ApproveParam,
+  BuyParam,
+  SellOrApproveMonitor,
+  SellParam,
+  SubAccount,
+  TokenInfo,
+} from './type';
 import { AppContext } from './context';
 import ChooseMethod from './choose-method';
 import BuyConfig from './buy-config';
@@ -15,6 +22,7 @@ import { TransactionManager } from '../modules/transaction/transaction';
 import { privateKeyToAccount, nonceManager } from 'viem/accounts';
 import { UniswapV2 } from '../modules/trading/uniswapV2';
 import BuyMonitor from './buy-monitor';
+import SellMonitor from './sell-monitor';
 
 enum Step {
   Config = 'config',
@@ -24,6 +32,7 @@ enum Step {
   Buy = 'buy',
   Sell = 'sell',
   BuyMonitor = 'buy-monitor',
+  SellMonitor = 'sell-monitor',
 }
 
 export default function App() {
@@ -44,6 +53,7 @@ export default function App() {
   const [subAccountsKey, setSubAccountsKey] = useState<AddressKeyPair[]>([]);
   const [subAccounts, setSubAccounts] = useState<SubAccount[]>([]);
   const [buyMonitors, setBuyMonitors] = useState<BuyParam[]>([]);
+  const [sellMonitors, setSellMonitors] = useState<SellOrApproveMonitor[]>([]);
 
   console.log(buyMonitors);
 
@@ -141,6 +151,56 @@ export default function App() {
     [tradingModule, subAccountsKey]
   );
 
+  const handleSell = useCallback(
+    async (sellParams: SellParam[]) => {
+      if (!tradingModule) {
+        throw new Error('Trading module is not initialized');
+      }
+
+      const accountsSell = sellParams.map(sellParam => {
+        const privateKey = subAccountsKey.find(
+          pair => pair.address === sellParam.address
+        )?.privateKey;
+        if (!privateKey) {
+          throw new Error('Private key not found');
+        }
+        return {
+          id: sellParam.id,
+          account: privateKeyToAccount(privateKey, { nonceManager }),
+          amountToSell: sellParam.amountToSell,
+        };
+      });
+
+      tradingModule.executeSells(accountsSell);
+    },
+    [tradingModule, subAccountsKey]
+  );
+
+  const handleApprove = useCallback(
+    async (approveParams: ApproveParam[]) => {
+      if (!tradingModule) {
+        throw new Error('Trading module is not initialized');
+      }
+
+      const accountsApprove = approveParams.map(approveParam => {
+        const privateKey = subAccountsKey.find(
+          pair => pair.address === approveParam.address
+        )?.privateKey;
+        if (!privateKey) {
+          throw new Error('Private key not found');
+        }
+        return {
+          id: approveParam.id,
+          account: privateKeyToAccount(privateKey, { nonceManager }),
+        };
+      })
+
+      tradingModule.lazyApprove(accountsApprove);
+      
+    },
+    [tradingModule, subAccountsKey]
+  );
+
   return (
     <AppContext.Provider
       value={{
@@ -148,8 +208,11 @@ export default function App() {
         subAccounts,
         tokenInfo,
         buyMonitors,
+        sellMonitors,
         reloadBalance: getBalances,
         handleBuy,
+        handleSell,
+        handleApprove,
       }}
     >
       <div className="min-h-screen flex flex-col justify-center items-center p-[20px]">
@@ -208,13 +271,28 @@ export default function App() {
               }}
             />
           )}
-          {step === Step.BuyMonitor && <BuyMonitor onPrev={() => {
-            setStep(Step.Config);
-          }} />}
+          {step === Step.BuyMonitor && (
+            <BuyMonitor
+              onPrev={() => {
+                setStep(Step.Config);
+              }}
+            />
+          )}
           {step === Step.Sell && (
             <SellConfig
               onPrev={() => {
                 setStep(Step.ChooseMethod);
+              }}
+              onNext={sellParams => {
+                setSellMonitors(sellParams);
+                setStep(Step.SellMonitor);
+              }}
+            />
+          )}
+          {step === Step.SellMonitor && (
+            <SellMonitor
+              onPrev={() => {
+                setStep(Step.Config);
               }}
             />
           )}

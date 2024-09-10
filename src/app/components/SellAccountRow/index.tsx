@@ -32,7 +32,7 @@ export default function SellAccountRow({
           className="w-full h-full px-[10px] outline-none"
           value={account.amount}
           onChange={e => onChangeAmount(account.address, e.target.value)}
-          placeholder="Enter amount here"
+          placeholder="Nhập số lượng bán"
         />
       </div>
     </div>

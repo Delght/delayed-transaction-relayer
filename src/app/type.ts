@@ -11,8 +11,11 @@ export type AppContextType = {
   subAccounts: SubAccount[];
   tokenInfo: TokenInfo;
   buyMonitors: BuyParam[];
+  sellMonitors: SellOrApproveMonitor[];
   reloadBalance: () => Promise<any>;
-  handleBuy: (accounts: BuyParam[]) => Promise<void>;
+  handleBuy: (buyParams: BuyParam[]) => Promise<void>;
+  handleSell: (sellParams: SellParam[]) => Promise<void>;
+  handleApprove: (approveParams: ApproveParam[]) => Promise<void>;
 };
 
 export type BuyParam = {
@@ -20,6 +23,24 @@ export type BuyParam = {
   address: `0x${string}`;
   ethToSwap: bigint;
 };
+
+export type SellParam = {
+  id: string;
+  address: `0x${string}`;
+  amountToSell: bigint;
+}
+
+export type ApproveParam = {
+  id: string;
+  address: `0x${string}`;
+}
+
+export type SellOrApproveMonitor = {
+  id: string;
+  address: `0x${string}`;
+  amountToSell: bigint;
+  type: 'sell' | 'approve';
+}
 
 export type SubAccount = AddressKeyPair & {
   balance: string;
