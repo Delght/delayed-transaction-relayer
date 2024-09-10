@@ -1,0 +1,46 @@
+@import url("boxicons/css/boxicons.min.css");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Roboto";
+  src: url(/font/Roboto/Thin.ttf);
+  font-weight: 300;
+}
+
+@font-face {
+  font-family: "Roboto";
+  src: url(/font/Roboto/Regular.ttf);
+  font-weight: 400;
+}
+
+
+@font-face {
+  font-family: "Roboto";
+  src: url(/font/Roboto/Medium.ttf);
+  font-weight: 500;
+}
+
+@font-face {
+  font-family: "Roboto";
+  src: url(/font/Roboto/Bold.ttf);
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: "Roboto";
+  src: url(/font/Roboto/Black.ttf);
+  font-weight: 900;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Roboto", sans-serif;
+}
+
+html {
+  overflow: hidden;
+}

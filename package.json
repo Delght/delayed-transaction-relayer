@@ -1,21 +1,55 @@
 {
-  "name": "buy-zl",
-  "module": "index.ts",
+  "name": "uni-trade-client",
+  "private": true,
+  "version": "0.0.0",
   "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
+  "scripts": {
+    "dev": "vite --port 6969",
+    "build": "tsc -b && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@uniswap/sdk-core": "^5.3.1",
+    "@lottiefiles/react-lottie-player": "^3.5.4",
+    "@tanstack/react-query": "^5.55.4",
+    "@uidotdev/usehooks": "^2.4.1",
     "async-mutex": "^0.5.0",
-    "dotenv": "^16.4.5",
+    "bignumber.js": "^9.1.2",
+    "boxicons": "^2.1.4",
+    "classnames": "^2.5.1",
+    "crypto-js": "^4.2.0",
+    "framer-motion": "^11.3.31",
     "pino": "^9.4.0",
-    "pino-pretty": "^11.2.2",
+    "react": "^18.3.1",
+    "react-device-detect": "^2.2.3",
+    "react-dom": "^18.3.1",
+    "react-hot-toast": "^2.4.1",
+    "react-if": "^4.1.5",
+    "react-media": "^1.10.0",
+    "react-router-dom": "^6.26.1",
+    "styled-components": "^6.1.13",
     "tinyqueue": "^3.0.0",
-    "viem": "^2.21.3",
+    "viem": "^2.21.4",
+    "vite-plugin-pwa": "^0.20.0",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/crypto-js": "^4.2.2",
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^7.15.0",
+    "@typescript-eslint/parser": "^7.15.0",
+    "@vitejs/plugin-react-swc": "^3.5.0",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.7",
+    "postcss": "^8.4.39",
+    "sass": "^1.77.8",
+    "sass-loader": "^14.2.1",
+    "tailwindcss": "^3.4.6",
+    "typescript": "^5.2.2",
+    "vite": "^5.3.4"
   }
 }

@@ -1,9 +1,9 @@
 import TinyQueue from 'tinyqueue';
 import { Mutex } from 'async-mutex';
 import { encodeFunctionData } from 'viem';
-import { logger } from '@/utils/logger';
+import { logger } from '../../utils/logger';
 import type { PrivateKeyAccount, PublicClient, WalletClient } from 'viem';
-import type { TransactionData, TransactionWithDeadline, QueuedTransaction, TrackedTransaction, TransactionManagerParams } from '@/types/types';
+import type { TransactionData, TransactionWithDeadline, QueuedTransaction, TrackedTransaction, TransactionManagerParams } from '../../types/types';
 
 export class TransactionManager {
   private queue: TinyQueue<QueuedTransaction>;
@@ -224,7 +224,7 @@ export class TransactionManager {
   private removeExpiredTransactions(currentBlockTimestamp: bigint) {
     while (this.queue && this.queue.length > 0 && (this.queue.peek()?.deadline ?? 0n) <= currentBlockTimestamp) {
       const { txData } = this.queue.pop() ?? { txData: { functionName: 'unknown', deadline: 0n } };
-      logger.warn(`TransactionManager.removeExpiredTransactions: Discarding transaction ${txData.functionName} - deadline passed: ${txData.deadline}`);
+      logger.warn(`TransactionManager.removeExpiredTransactions: Discarding transaction ${txData.functionName} - deadline passed: ${(txData as any)?.deadline}`);
     }
   }
 
