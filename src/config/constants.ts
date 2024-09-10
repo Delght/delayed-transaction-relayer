@@ -1,4 +1,10 @@
-export const MAX_UINT256 = BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+export const SLIPPAGE_TOLERANCE_BASIS_POINTS = 700;
+
+export const ONE_HUNDRED_PERCENT = 10000; // 10,000 basis points represent 100%
+
+export const MAX_UINT256 = BigInt(
+  "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+);
 
 export const ERC20_ABI = [
   {
@@ -120,7 +126,7 @@ export const ERC20_ABI = [
     payable: true,
     stateMutability: "payable",
     type: "fallback",
-  }
+  },
 ];
 
 export const UNISWAP_V2_ROUTER_ABI = [
@@ -131,7 +137,7 @@ export const UNISWAP_V2_ROUTER_ABI = [
       { internalType: "address", name: "to", type: "address" },
       { internalType: "uint256", name: "deadline", type: "uint256" },
     ],
-    name: "swapExactETHForTokensSupportingFeeOnTransferTokens",
+    name: "swapExactETHForTokens",
     outputs: [],
     stateMutability: "payable",
     type: "function",
@@ -144,9 +150,33 @@ export const UNISWAP_V2_ROUTER_ABI = [
       { internalType: "address", name: "to", type: "address" },
       { internalType: "uint256", name: "deadline", type: "uint256" },
     ],
-    name: "swapExactTokensForETHSupportingFeeOnTransferTokens",
+    name: "swapExactTokensForETH",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "amountIn",
+        type: "uint256",
+      },
+      {
+        internalType: "address[]",
+        name: "path",
+        type: "address[]",
+      },
+    ],
+    name: "getAmountsOut",
+    outputs: [
+      {
+        internalType: "uint256[]",
+        name: "amounts",
+        type: "uint256[]",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
 ];

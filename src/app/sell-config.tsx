@@ -23,7 +23,7 @@ export default function SellConfig({
     const result = subAccounts.map(account => {
       return {
         ...account,
-        amount: BigNumber(account.balanceToken).toFixed(8),
+        amount: BigNumber(account.balanceToken).toFixed(18),
       };
     });
     return result;
@@ -129,7 +129,7 @@ export default function SellConfig({
   };
 
   return (
-    <div className="w-full flex flex-col justify-center items-center">
+    <div className="flex flex-col items-center justify-center w-full">
       <h1 className="text-4xl font-bold text-center text-[rgb(252,114,255)]">
         Bán token
       </h1>

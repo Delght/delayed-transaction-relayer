@@ -1,4 +1,5 @@
 import type { Abi, PrivateKeyAccount, PublicClient, WalletClient } from 'viem';
+import { TransactionDataCalculator } from '../modules/transaction/calculator';
 
 export interface TransactionData {
   address: `0x${string}`,
@@ -22,6 +23,7 @@ export interface TransactionManagerParams {
   maxRetries?: number;
   batchSize?: number;
   monitorPendingTxsInterval?: number;
+  calculator?: TransactionDataCalculator;
 }
 
 export interface QueuedTransaction extends TransactionWithDeadline {

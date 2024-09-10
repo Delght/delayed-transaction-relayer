@@ -83,7 +83,7 @@ export class UniswapV2 {
     buyParams.forEach(buyParam => {
       const txData: TransactionWithDeadline = {
         txData: this.createUniswapTxData(
-          'swapExactETHForTokensSupportingFeeOnTransferTokens',
+          'swapExactETHForTokens',
           [
             minTokensOut,
             [config.WETH_ADDRESS, this.tokenAddress],
@@ -115,7 +115,7 @@ export class UniswapV2 {
     sellParams.forEach(sellParam => {
       const txData: TransactionWithDeadline = {
         txData: this.createUniswapTxData(
-          'swapExactTokensForETHSupportingFeeOnTransferTokens',
+          'swapExactTokensForETH',
           [
             sellParam.amountToSell,
             minEthOut,

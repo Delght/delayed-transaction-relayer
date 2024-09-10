@@ -1,15 +1,17 @@
-import TinyQueue from 'tinyqueue';
-import { Mutex } from 'async-mutex';
-import { encodeFunctionData } from 'viem';
-import { logger } from '../../utils/logger';
-import type { PrivateKeyAccount, PublicClient, WalletClient } from 'viem';
-import type { TransactionData, TransactionWithDeadline, QueuedTransaction, TrackedTransaction, TransactionManagerParams } from '../../types/types';
-import Observer from '../../utils/observer';
+import TinyQueue from "tinyqueue";
+import { Mutex } from "async-mutex";
+import { encodeFunctionData } from "viem";
+import { logger } from "../../utils/logger";
+import { config } from "../../config/config";
+import { TransactionDataCalculator } from "./calculator";
+import type { PrivateKeyAccount, PublicClient, WalletClient } from "viem";
+import type { TransactionData, TransactionWithDeadline, QueuedTransaction, TrackedTransaction, TransactionManagerParams } from "../../types/types";
+import Observer from "../../utils/observer";
 
 export class TransactionManager {
   private queue: TinyQueue<QueuedTransaction>;
-  private readonly accounts: Array<{ account: PrivateKeyAccount, walletClient: WalletClient }>; 
-  private readonly client: PublicClient; 
+  private readonly accounts: Array<{ account: PrivateKeyAccount, walletClient: WalletClient}>;
+  private readonly client: PublicClient;
   private readonly queueInterval: number;
   private readonly maxRetries: number;
   private readonly batchSize: number;
@@ -20,9 +22,13 @@ export class TransactionManager {
   private readonly removalSet: Set<`0x${string}`>;
   private readonly removalSetMutex: Mutex;
   private readonly delayedQueue: QueuedTransaction[];
+  private readonly calculator: TransactionDataCalculator;
 
   constructor(params: TransactionManagerParams) {
-    this.queue = new TinyQueue<QueuedTransaction>([], (a, b) => Number(a.notBefore ?? 0n) - Number(b.notBefore ?? 0n));
+    this.queue = new TinyQueue<QueuedTransaction>(
+      [],
+      (a, b) => Number(a.notBefore ?? 0n) - Number(b.notBefore ?? 0n)
+    );
     this.accounts = params.accounts;
     this.client = params.client;
     this.queueInterval = params.queueInterval || 1000;
@@ -35,13 +41,19 @@ export class TransactionManager {
     this.removalSetMutex = new Mutex();
     this.monitorPendingTxsInterval = params.monitorPendingTxsInterval || 1000;
     this.delayedQueue = [];
+    this.calculator =
+      params.calculator ||
+      new TransactionDataCalculator(
+        this.client,
+        config.UNISWAP_V2_ROUTER_ADDRESS
+      );
   }
 
   /**
    * Initializes the TransactionManager by starting the processQueue and monitorPendingTxs methods.
    */
   public async initialize() {
-    logger.info('TransactionManager: initialized');
+    logger.info("TransactionManager: initialized");
 
     this.processQueue();
     this.monitorPendingTxs();
@@ -62,7 +74,7 @@ export class TransactionManager {
       ...transactionWithDeadline,
       account,
       walletClient,
-      retries: 0
+      retries: 0,
     };
 
     const currentBlockTimestamp = await this.getCurrentBlockTimestamp();
@@ -80,7 +92,6 @@ export class TransactionManager {
     });
   }
 
-
   /**
    * Processes the queue by checking for transactions to process, requeueing delayed transactions, and removing expired transactions.
    * @returns A promise that resolves when the queue is processed
@@ -92,12 +103,13 @@ export class TransactionManager {
     while (true) {
       await this.queueMutex.runExclusive(() => {
         if (this.queue.length === 0 && this.delayedQueue.length === 0) {
-          logger.info('TransactionManager.processQueue: Both main and delayed queues are empty, waiting for transactions to be added');
+          logger.info(
+            "TransactionManager.processQueue: Both main and delayed queues are empty, waiting for transactions to be added"
+          );
           return; // Exit early if both queues are empty
         }
       });
 
-      
       currentBlockTimestamp = await this.getCurrentBlockTimestamp();
 
       await this.queueMutex.runExclusive(() => {
@@ -110,7 +122,11 @@ export class TransactionManager {
 
       // Process transactions outside of mutex block
       if (transactionsToProcess.length > 0) {
-        logger.info(`TransactionManager.processQueue: Transactions to process: ${transactionsToProcess.map(tx => tx.txData.functionName).join(', ')}`);
+        logger.info(
+          `TransactionManager.processQueue: Transactions to process: ${transactionsToProcess
+            .map((tx) => tx.txData.functionName)
+            .join(", ")}`
+        );
         await this.processTransactions(transactionsToProcess);
       }
 
@@ -125,36 +141,62 @@ export class TransactionManager {
    * @returns A promise that resolves when the transactions are processed
    */
   private async processTransactions(transactionsToProcess: QueuedTransaction[]) {
-    await Promise.allSettled(
-      transactionsToProcess.map(async ({ txData, account, walletClient, deadline, retries, id }) => {
+    await Promise.allSettled(transactionsToProcess.map(async (queueTransaction) => {
+        const { account, walletClient, deadline, retries, id } = queueTransaction;
         try {
+          // Call the before hook to update the transaction data
+          queueTransaction = await this.beforeSubmitTransaction(queueTransaction);
+          const { txData } = queueTransaction;
+
           const { receipt, trackedTxData } = await this.submitTransaction(txData, walletClient);
+
           id && Observer.emit(id, receipt.transactionHash);
 
           const currentBlockTimestamp = await this.getCurrentBlockTimestamp();
 
           await this.trackedTransactionsMutex.runExclusive(() => {
-            this.trackedTransactions.set(trackedTxData.txHash, { ...trackedTxData, account, walletClient, deadline, retries, submittedAt: currentBlockTimestamp, nonce: BigInt(trackedTxData.nonce)});
+            this.trackedTransactions.set(trackedTxData.txHash, {
+              ...trackedTxData,
+              account,
+              walletClient,
+              deadline,
+              retries,
+              submittedAt: currentBlockTimestamp,
+              nonce: BigInt(trackedTxData.nonce),
+            });
           });
 
-          if (receipt.status === 'reverted') {
+          if (receipt.status === "reverted") {
             await this.handleTxRevert(receipt.transactionHash);
           } else {
-            logger.info(`TransactionManager.processTransactions: Transaction ${txData.functionName} for account ${account.address} succeeded`);
+            logger.info(
+              `TransactionManager.processTransactions: Transaction ${txData.functionName} for account ${account.address} succeeded`
+            );
             await this.trackedTransactionsMutex.runExclusive(() => {
               this.trackedTransactions.delete(receipt.transactionHash);
             });
           }
         } catch (error) {
           await this.handleTxError(error);
+          const { txData } = queueTransaction;
           if (retries < this.maxRetries) {
-            logger.info(`TransactionManager.processTransactions: Retrying transaction for account ${account.address}, function: ${txData.functionName}, retries: ${retries}`);
+            logger.info(
+              `TransactionManager.processTransactions: Retrying transaction for account ${account.address}, function: ${txData.functionName}, retries: ${retries}`
+            );
             await this.queueMutex.runExclusive(() => {
-              this.queue.push({ txData, account, walletClient, deadline, retries: retries + 1 });
+              this.queue.push({
+                txData,
+                account,
+                walletClient,
+                deadline,
+                retries: retries + 1,
+              });
             });
           } else {
-            logger.warn(`TransactionManager.processTransactions: Max retries reached for account ${account.address}, function: ${txData.functionName}`);
-            id && Observer.emit(id, 'failed');
+            logger.warn(
+              `TransactionManager.processTransactions: Max retries reached for account ${account.address}, function: ${txData.functionName}`
+            );
+            id && Observer.emit(id, "failed");
           }
         }
       })
@@ -168,7 +210,9 @@ export class TransactionManager {
    * @returns A promise with the transaction receipt and tracked transaction data
    */
   private async submitTransaction(txData: TransactionData, walletClient: WalletClient) {
-    logger.info(`TransactionManager.submitTransaction: Submitting transaction: ${txData.functionName}`);
+    logger.info(
+      `TransactionManager.submitTransaction: Submitting transaction: ${txData.functionName}`
+    );
 
     const currentGasPrice = await this.client.getGasPrice();
     const gasPrice = currentGasPrice + BigInt(Math.floor(Number(currentGasPrice) * 0.1)); // 10% buffer
@@ -177,10 +221,8 @@ export class TransactionManager {
     const nonce = await walletClient.account?.nonceManager?.get({
       address: walletClient.account?.address,
       chainId: this.client.chain!.id,
-      client: this.client
+      client: this.client,
     });
-
-    logger.info(`TransactionManager.submitTransaction: Nonce for account ${walletClient.account?.address}: ${nonce}`);
 
     const trackedTxData = {
       txHash,
@@ -198,24 +240,29 @@ export class TransactionManager {
    * @param currentBlockTimestamp The current block timestamp
    * @returns A promise that resolves when the delayed transactions are requeued
    */
-  private async requeueDelayedTransactions(delayedQueue: QueuedTransaction[], currentBlockTimestamp: bigint) {
+  private async requeueDelayedTransactions(
+    delayedQueue: QueuedTransaction[],
+    currentBlockTimestamp: bigint
+  ) {
     for (let i = 0; i < delayedQueue.length; i++) {
       const delayedTx = delayedQueue[i];
-      logger.info(`TransactionManager.requeueDelayedTransactions: Requeuing delayed transaction ${delayedTx.txData.functionName}, notBefore: ${delayedTx.notBefore}, currentBlockTimestamp: ${currentBlockTimestamp}`);
-      
+      logger.info(
+        `TransactionManager.requeueDelayedTransactions: Requeuing delayed transaction ${delayedTx.txData.functionName}, notBefore: ${delayedTx.notBefore}, currentBlockTimestamp: ${currentBlockTimestamp}`
+      );
+
       // Check if the transaction is ready to be requeued based on the current block timestamp
       if (delayedTx.notBefore && currentBlockTimestamp >= delayedTx.notBefore) {
         await this.queueMutex.runExclusive(() => {
           this.queue.push(delayedTx);
         });
-        
+
         // Remove the transaction from delayedQueue
         delayedQueue.splice(i, 1);
-        
+
         // Adjust the index after splicing
         i--;
-  
-        logger.info(`TransactionManager.requeueDelayedTransactions: Moved delayed transaction ${delayedTx.txData.functionName} back to main queue`);
+
+        // logger.info(`TransactionManager.requeueDelayedTransactions: Moved delayed transaction ${delayedTx.txData.functionName} back to main queue`);
       }
     }
   }
@@ -225,9 +272,18 @@ export class TransactionManager {
    * @param currentBlockTimestamp The current block timestamp
    */
   private removeExpiredTransactions(currentBlockTimestamp: bigint) {
-    while (this.queue && this.queue.length > 0 && (this.queue.peek()?.deadline ?? 0n) <= currentBlockTimestamp) {
-      const { txData } = this.queue.pop() ?? { txData: { functionName: 'unknown', deadline: 0n } };
-      logger.warn(`TransactionManager.removeExpiredTransactions: Discarding transaction ${txData.functionName} - deadline passed: ${(txData as any)?.deadline}`);
+    while (
+      this.queue &&
+      this.queue.length > 0 &&
+      (this.queue.peek()?.deadline ?? 0n) <= currentBlockTimestamp
+    ) {
+      const { txData } = this.queue.pop() ?? {
+        txData: { functionName: "unknown", deadline: 0n },
+      };
+      logger.warn(
+        `TransactionManager.removeExpiredTransactions: Discarding transaction ${txData.functionName
+        } - deadline passed: ${(txData as any)?.deadline}`
+      );
     }
   }
 
@@ -238,9 +294,12 @@ export class TransactionManager {
    */
   private async getTransactionsToProcess(): Promise<QueuedTransaction[]> {
     const transactionsToProcess: QueuedTransaction[] = [];
-    
+
     await this.queueMutex.runExclusive(() => {
-      while (this.queue.length > 0 && transactionsToProcess.length < this.batchSize) {
+      while (
+        this.queue.length > 0 &&
+        transactionsToProcess.length < this.batchSize
+      ) {
         const nextTx = this.queue.pop();
 
         if (nextTx) {
@@ -259,79 +318,94 @@ export class TransactionManager {
     return transactionsToProcess;
   }
 
+  /**
+   * Monitors pending transactions to check their status and take action if necessary.
+   * This method is run in a loop with a delay between each iteration.
+   */
+  private async monitorPendingTxs() {
+    while (true) {
+      await this.trackedTransactionsMutex.runExclusive(async () => {
+        const pendingTxHashes = Array.from(this.trackedTransactions.keys());
 
-/**
- * Monitors pending transactions to check their status and take action if necessary.
- * This method is run in a loop with a delay between each iteration.
- */
-private async monitorPendingTxs() {
-  while (true) {
-    await this.trackedTransactionsMutex.runExclusive(async () => {
-      const pendingTxHashes = Array.from(this.trackedTransactions.keys());
-
-      logger.info(`TransactionManager.monitorPendingTxs: Pending transactions: ${pendingTxHashes.length ? pendingTxHashes.join(', ') : 'none'}`);
-
-      for (const txHash of pendingTxHashes) {
-        try {
-          const receipt = await this.client.getTransactionReceipt({ hash: txHash });
-
-          if (!receipt) {
-            const trackedTx = this.trackedTransactions.get(txHash);
-
-            if (trackedTx) {
-              const timeElapsed = Date.now() - Number(trackedTx.submittedAt); 
-              const shouldSpeedUp = timeElapsed > 300000; // 5 minutes
-              const shouldDrop = trackedTx.retries > this.maxRetries; 
-
-              if (shouldSpeedUp) {
-                await this.speedUpTransaction(txHash);
-              } else if (shouldDrop) {
-                await this.dropTransaction(txHash);
-              }
-            }
-          } else {
-            // Transaction has been confirmed
-            this.trackedTransactions.delete(receipt.transactionHash);
-            logger.info(`TransactionManager.monitorPendingTxs: Transaction confirmed with hash: ${txHash}`);
-          }
-        } catch (error) {
-          logger.error(`TransactionManager.monitorPendingTxs: Error checking transaction status for hash: ${txHash}`, error);
+        if (pendingTxHashes.length !== 0) {
+          logger.info(`TransactionManager.monitorPendingTxs: Pending transactions: ${pendingTxHashes.length}`);
         }
-      }
-    });
-    await new Promise((resolve) => setTimeout(resolve, this.monitorPendingTxsInterval));
-  }
-}
 
-/**
- * Speeds up a transaction by increasing the gas price.
- * @param txHash The hash of the transaction to speed up
- */
-private async speedUpTransaction(txHash: `0x${string}`) {
-  await this.trackedTransactionsMutex.runExclusive(async () => {
-    const trackedTx = this.trackedTransactions.get(txHash);
-    if (!trackedTx) {
-      logger.warn(`TransactionManager.speedUpTransaction: Transaction with hash ${txHash} not found`);
-      return;
+        for (const txHash of pendingTxHashes) {
+          try {
+            const receipt = await this.client.getTransactionReceipt({ hash: txHash });
+
+            if (!receipt) {
+              const trackedTx = this.trackedTransactions.get(txHash);
+
+              if (trackedTx) {
+                const timeElapsed = Date.now() - Number(trackedTx.submittedAt);
+                const shouldSpeedUp = timeElapsed > 300000; // 5 minutes
+                const shouldDrop = trackedTx.retries > this.maxRetries;
+
+                if (shouldSpeedUp) {
+                  await this.speedUpTransaction(txHash);
+                } else if (shouldDrop) {
+                  await this.dropTransaction(txHash);
+                }
+              }
+            } else {
+              // Transaction has been confirmed
+              this.trackedTransactions.delete(receipt.transactionHash);
+              logger.info(
+                `TransactionManager.monitorPendingTxs: Transaction confirmed with hash: ${txHash}`
+              );
+            }
+          } catch (error) {
+            logger.error(
+              `TransactionManager.monitorPendingTxs: Error checking transaction status for hash: ${txHash}`,
+              error
+            );
+          }
+        }
+      });
+      await new Promise((resolve) =>
+        setTimeout(resolve, this.monitorPendingTxsInterval)
+      );
     }
+  }
 
-    logger.info(`TransactionManager.speedUpTransaction: Speeding up transaction with hash: ${txHash} by increasing gas price`);
+  /**
+   * Speeds up a transaction by increasing the gas price.
+   * @param txHash The hash of the transaction to speed up
+   */
+  private async speedUpTransaction(txHash: `0x${string}`) {
+    await this.trackedTransactionsMutex.runExclusive(async () => {
+      const trackedTx = this.trackedTransactions.get(txHash);
+      if (!trackedTx) {
+        logger.warn(
+          `TransactionManager.speedUpTransaction: Transaction with hash ${txHash} not found`
+        );
+        return;
+      }
 
-    const originalGasPrice = trackedTx.gasPrice ? trackedTx.gasPrice : await this.client.getGasPrice();
-    const newGasPrice = originalGasPrice + BigInt(Math.floor(Number(originalGasPrice) * 0.1)); // Increase by 10%
+      logger.info(
+        `TransactionManager.speedUpTransaction: Speeding up transaction with hash: ${txHash} by increasing gas price`
+      );
 
-    await this.queueMutex.runExclusive(() => {
-      this.queue.push({
-        txData: trackedTx.txData,
-        account: trackedTx.account,
-        walletClient: trackedTx.walletClient,
-        deadline: trackedTx.deadline,
-        retries: trackedTx.retries + 1,
-        gasPrice: newGasPrice,
+      const originalGasPrice = trackedTx.gasPrice
+        ? trackedTx.gasPrice
+        : await this.client.getGasPrice();
+      const newGasPrice =
+        originalGasPrice + BigInt(Math.floor(Number(originalGasPrice) * 0.1)); // Increase by 10%
+
+      await this.queueMutex.runExclusive(() => {
+        this.queue.push({
+          txData: trackedTx.txData,
+          account: trackedTx.account,
+          walletClient: trackedTx.walletClient,
+          deadline: trackedTx.deadline,
+          retries: trackedTx.retries + 1,
+          gasPrice: newGasPrice,
+        });
       });
     });
-  });
-}
+  }
 
   /**
    * Drops a transaction from the queue.
@@ -347,7 +421,9 @@ private async speedUpTransaction(txHash: `0x${string}`) {
       this.removalSet.add(txHash); // Add the transaction hash to the removalSet
     });
 
-    logger.info(`TransactionManager.dropTransaction: Transaction with hash ${txHash} marked for removal`);
+    logger.info(
+      `TransactionManager.dropTransaction: Transaction with hash ${txHash} marked for removal`
+    );
   }
 
   /**
@@ -355,36 +431,48 @@ private async speedUpTransaction(txHash: `0x${string}`) {
    * @param txHash The hash of the reverted transaction
    */
   private async handleTxRevert(txHash: `0x${string}`) {
-    logger.error(`TransactionManager.handleTxRevert: Transaction ${txHash} reverted`);
+    logger.error(
+      `TransactionManager.handleTxRevert: Transaction ${txHash} reverted`
+    );
   }
 
-  
   /**
-  * Estimates gas for a transaction.
-  * @param tx The transaction data
-  * @returns The estimated gas limit
-  */
-  private async estimateGasWithFallback(tx: TransactionData, walletClient: WalletClient) {
+   * Estimates gas for a transaction.
+   * @param tx The transaction data
+   * @returns The estimated gas limit
+   */
+  private async estimateGasWithFallback(
+    tx: TransactionData,
+    walletClient: WalletClient
+  ) {
     const defaultGasLimit = BigInt(1_000_000);
 
     try {
-        const calldata = encodeFunctionData({ abi: tx.abi, functionName: tx.functionName, args: tx.args });
+      const calldata = encodeFunctionData({
+        abi: tx.abi,
+        functionName: tx.functionName,
+        args: tx.args,
+      });
 
-        const gasEstimate = await this.client.estimateGas({
-          to: tx.address,
-          data: calldata,
-          account: walletClient.account, 
-          value: tx.value,
-        });
+      const gasEstimate = await this.client.estimateGas({
+        to: tx.address,
+        data: calldata,
+        account: walletClient.account,
+        value: tx.value,
+      });
 
-        const gasLimit = gasEstimate + BigInt(Math.floor(Number(gasEstimate) * 0.1));
-        
-        return gasLimit;
-      } catch (error) {
-        logger.error(`Failed to estimate gas: ${error instanceof Error ? error.message : String(error)}`);
-        return defaultGasLimit;
-      }
+      const gasLimit =
+        gasEstimate + BigInt(Math.floor(Number(gasEstimate) * 0.1));
+
+      return gasLimit;
+    } catch (error) {
+      logger.error(
+        `Failed to estimate gas: ${error instanceof Error ? error.message : String(error)
+        }`
+      );
+      return defaultGasLimit;
     }
+  }
 
   /**
    * Sends a transaction to the chain.
@@ -413,20 +501,25 @@ private async speedUpTransaction(txHash: `0x${string}`) {
     });
 
     const txHash = await walletClient.writeContract(request);
-  
-    logger.info(`TransactionManager.sendTransaction: Transaction sent, txHash: ${txHash}`);
 
-    const receipt = await this.client.waitForTransactionReceipt({ hash: txHash });
+    logger.info(
+      `TransactionManager.sendTransaction: Transaction sent, txHash: ${txHash}`
+    );
+
+    const receipt = await this.client.waitForTransactionReceipt({
+      hash: txHash,
+    });
     return { txHash, receipt };
   }
-
 
   /**
    * Retrieves the WalletClient associated with a given account.
    * @param account The account to retrieve the WalletClient for.
    */
   private getWalletClient(account: PrivateKeyAccount): WalletClient | undefined {
-    const accountInfo = this.accounts.find(acc => acc.account.address === account.address);
+    const accountInfo = this.accounts.find(
+      (acc) => acc.account.address === account.address
+    );
     return accountInfo?.walletClient;
   }
 
@@ -441,15 +534,71 @@ private async speedUpTransaction(txHash: `0x${string}`) {
 
   /**
    * Handles transaction errors by logging the error message.
-   * @param error 
+   * @param error
    */
   private async handleTxError(error: unknown) {
     if (error instanceof Error) {
-      logger.error(`TransactionManager.handleTxError: Failed to process transaction: ${error.message}`);
-      } else {
-      logger.error(`TransactionManager.handleTxError: Failed to process transaction: ${String(error)}`);
+      logger.error(
+        `TransactionManager.handleTxError: Failed to process transaction: ${error.message}`
+      );
+    } else {
+      logger.error(
+        `TransactionManager.handleTxError: Failed to process transaction: ${String(
+          error
+        )}`
+      );
     }
   }
+
+  private async beforeSubmitTransaction(
+    queuedTransaction: QueuedTransaction
+  ): Promise<QueuedTransaction> {
+    const { txData } = queuedTransaction;
+
+    switch (txData.functionName) {
+      case "swapExactETHForTokens":
+        queuedTransaction.txData = await this.recalculateMinAmount(
+          queuedTransaction,
+          txData.value ?? txData.args[0],
+          txData.args[1],
+          0
+        );
+        break;
+
+      case "swapExactTokensForETH":
+        queuedTransaction.txData = await this.recalculateMinAmount(
+          queuedTransaction,
+          txData.args[0],
+          txData.args[2],
+          1
+        );
+        break;
+
+      default:
+      // do nothing
+    }
+
+    return queuedTransaction;
+  }
+
+  private async recalculateMinAmount(
+    queuedTransaction: QueuedTransaction,
+    amountIn: bigint,
+    path: `0x${string}`[],
+    minAmountIndex: number
+  ): Promise<TransactionData> {
+    const currentAmountOut = await this.calculator.getAmountsOut(
+      amountIn,
+      path
+    );
+    const newMinAmount =
+      this.calculator.calculateMinAmountWithSlippage(currentAmountOut);
+    queuedTransaction.txData.args[minAmountIndex] = newMinAmount;
+
+    logger.info(
+      `Transaction recalculated for function: ${queuedTransaction.txData.functionName}, new min amount: ${newMinAmount}`
+    );
+
+    return queuedTransaction.txData;
+  }
 }
-
-
