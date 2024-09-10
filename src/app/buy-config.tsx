@@ -50,7 +50,6 @@ export default function BuyConfig({ onPrev, onNext }: { onPrev: () => void, onNe
   const [subAccountsWithAmountLocal, setSubAccountsWithAmountLocal] = useState<
     SubAccountWithAmount[]
   >(subAccountsWithAmount);
-  console.log(subAccountsWithAmountLocal);
 
   const onChangeAmount = (address: string, amount: string) => {
     const clone = [...subAccountsWithAmountLocal];
@@ -75,7 +74,7 @@ export default function BuyConfig({ onPrev, onNext }: { onPrev: () => void, onNe
   };
 
   return (
-    <div className="w-full flex flex-col justify-center items-center">
+    <div className="flex flex-col items-center justify-center w-full">
       <h1 className="text-4xl font-bold text-center text-[rgb(252,114,255)]">
         Mua token
       </h1>

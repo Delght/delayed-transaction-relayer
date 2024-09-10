@@ -109,7 +109,7 @@ export default function App() {
       return { account, walletClient };
     });
 
-    const transactionManager = new TransactionManager({
+    const transactionManager = TransactionManager.getInstance({
       accounts,
       client: publicClient,
       queueInterval: 12000, // 12 seconds
@@ -124,7 +124,7 @@ export default function App() {
     return trading;
   }, [subAccountsKey, tokenInfo]);
 
-  console.log({ tradingModule });
+  // console.log({ tradingModule });
 
   const handleBuy = useCallback(
     async (buyParams: BuyParam[]) => {

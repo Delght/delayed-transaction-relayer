@@ -9,6 +9,8 @@ import type { TransactionData, TransactionWithDeadline, QueuedTransaction, Track
 import Observer from "../../utils/observer";
 
 export class TransactionManager {
+  private static instance: TransactionManager | null = null;  // Static instance to enforce Singleton pattern
+
   private queue: TinyQueue<QueuedTransaction>;
   private readonly accounts: Array<{ account: PrivateKeyAccount, walletClient: WalletClient}>;
   private readonly client: PublicClient;
@@ -24,7 +26,7 @@ export class TransactionManager {
   private readonly delayedQueue: QueuedTransaction[];
   private readonly calculator: TransactionDataCalculator;
 
-  constructor(params: TransactionManagerParams) {
+  private constructor(params: TransactionManagerParams) {
     this.queue = new TinyQueue<QueuedTransaction>(
       [],
       (a, b) => Number(a.notBefore ?? 0n) - Number(b.notBefore ?? 0n)
@@ -47,6 +49,14 @@ export class TransactionManager {
         this.client,
         config.UNISWAP_V2_ROUTER_ADDRESS
       );
+  }
+
+  // Public method to get the instance of the TransactionManager
+  public static getInstance(params: TransactionManagerParams): TransactionManager {
+    if (this.instance === null) {
+      this.instance = new TransactionManager(params);  // Create instance if not already created
+    }
+    return this.instance;  // Return the single instance
   }
 
   /**
@@ -103,9 +113,9 @@ export class TransactionManager {
     while (true) {
       await this.queueMutex.runExclusive(() => {
         if (this.queue.length === 0 && this.delayedQueue.length === 0) {
-          logger.info(
-            "TransactionManager.processQueue: Both main and delayed queues are empty, waiting for transactions to be added"
-          );
+          // logger.info(
+          //   "TransactionManager.processQueue: Both main and delayed queues are empty, waiting for transactions to be added"
+          // );
           return; // Exit early if both queues are empty
         }
       });
@@ -185,10 +195,7 @@ export class TransactionManager {
             );
             await this.queueMutex.runExclusive(() => {
               this.queue.push({
-                txData,
-                account,
-                walletClient,
-                deadline,
+                ...queueTransaction,
                 retries: retries + 1,
               });
             });
