@@ -14,7 +14,14 @@
 //   DISPERSE_ADDRESS: import.meta.env.VITE_DISPERSE_ADDRESS,
 // });
 
-export const config = {
+type Config = {
+  RPC_URL: string;
+  UNISWAP_V2_ROUTER_ADDRESS: `0x${string}`;
+  WETH_ADDRESS: `0x${string}`;
+  DISPERSE_ADDRESS: `0x${string}`;
+};
+
+export const config: Config = {
   RPC_URL: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
   UNISWAP_V2_ROUTER_ADDRESS: "0xC532a74256D3Db42D0Bf7a0400fEFDbad7694008",
   WETH_ADDRESS: "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
