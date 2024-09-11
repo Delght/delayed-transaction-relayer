@@ -44,7 +44,7 @@ export default function WithdrawConfig({
 
   return (
     <div className="flex flex-col items-center justify-center w-full">
-      <h1 className="text-4xl font-bold text-center text-[rgb(252,114,255)]">
+      <h1 className="text-2xl font-bold text-center text-[rgb(252,114,255)]">
         Rút ETH về ví chính
       </h1>
       <div

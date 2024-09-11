@@ -65,7 +65,7 @@ export default function ImportSubAccounts({
 
   return (
     <div className="w-full flex flex-col justify-center items-center">
-      <h1 className="text-4xl font-bold text-center text-[rgb(252,114,255)]">
+      <h1 className="text-2xl font-bold text-center text-[rgb(252,114,255)]">
         Nhập danh sách ví phụ  
       </h1>
       <h2 className="mt-[20px] text-lg font-bold text-center">

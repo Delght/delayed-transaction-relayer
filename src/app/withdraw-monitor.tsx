@@ -12,7 +12,7 @@ export default function WithdrawMonitor({ onPrev }: { onPrev: () => void }) {
 
   return (
     <div className="w-full flex flex-col justify-center items-center">
-      <h1 className="text-4xl font-bold text-center text-[rgb(252,114,255)]">
+      <h1 className="text-2xl font-bold text-center text-[rgb(252,114,255)]">
         Theo dõi giao dịch rút ETH
       </h1>
       <div className="mt-[20px]">
