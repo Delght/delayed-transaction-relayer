@@ -11,20 +11,20 @@ export default function SellMonitor({ onPrev }: { onPrev: () => void }) {
         Theo dõi giao dịch bán
       </h1>
       <div
-        className="mt-[10px]"
+        className="mt-[20px]"
         
       >
         Vui lòng không thoát khỏi trang này trong quá trình bán token
       </div>
       <div
-        className="mt-[10px] text-[rgba(252,114,255,0.9)] cursor-pointer"
+        className="mt-[20px] text-[rgba(252,114,255,0.9)] cursor-pointer"
         onClick={() => {
           onPrev();
         }}
       >
         Trở về trang chủ
       </div>
-      <div className="mt-[30px] flex flex-col w-full max-w-[1200px] border-2">
+      <div className="mt-[20px] flex flex-col w-full max-w-[Min(1200px,90vw)] border-2">
         <div className={classNames('flex items-center')}>
           <div className="w-[20%] p-[10px] font-bold">Ví phụ</div>
           <div className="w-[15%] border-l-2 p-[10px] font-bold">

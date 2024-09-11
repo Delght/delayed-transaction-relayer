@@ -17,7 +17,7 @@ export default function ChooseMethod({
         Chọn giao dịch
       </h1>
       <div
-        className="mt-[10px] text-[rgba(252,114,255,0.9)] cursor-pointer"
+        className="mt-[20px] text-[rgba(252,114,255,0.9)] cursor-pointer"
         onClick={() => {
           onPrev();
         }}
@@ -25,8 +25,8 @@ export default function ChooseMethod({
         Quay lại bước trước đó
       </div>
 
-      <div className="text-lg mt-[20px]">Chọn giao dịch mua, bán hoặc rút ETH</div>
-      <div className="w-full flex items-center justify-center max-w-[600px] gap-[20px]">
+      <div className="text-base mt-[20px]">Chọn giao dịch mua, bán hoặc rút ETH</div>
+      <div className="w-full flex items-center justify-center max-w-[500px] gap-[20px]">
         <div className='w-full max-w-[30%]'>
           <Button
             onClick={() => {

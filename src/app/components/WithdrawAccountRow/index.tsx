@@ -10,12 +10,12 @@ export default function WithdrawAccountRow({
   return (
     <div
       key={account.address}
-      className={classNames('h-[50px] flex items-center border-t-2')}
+      className={classNames('min-h-[40px] flex items-stretch border-t-2 break-all')}
     >
-      <div className="w-[50%] h-full flex items-center px-[10px]">
+      <div className="w-[50%] flex items-center px-[10px] text-[14px]">
         {ellipsisAddress(account.address)}
       </div>
-      <div className="w-[25%] h-full border-l-2 flex items-center px-[10px]">
+      <div className="w-[25%] border-l-2 flex items-center px-[10px] text-[14px]">
         {renderTokenAmount(account?.balance)}
         ETH
       </div>

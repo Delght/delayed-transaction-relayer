@@ -82,14 +82,14 @@ export default function BuyConfig({ onPrev, onNext }: { onPrev: () => void, onNe
         Mua token
       </h1>
       <div
-        className="mt-[10px] text-[rgba(252,114,255,0.9)] cursor-pointer"
+        className="mt-[20px] text-[rgba(252,114,255,0.9)] cursor-pointer"
         onClick={() => {
           onPrev();
         }}
       >
         Quay lại bước trước đó
       </div>
-      <div className="mt-[20px] w-full max-w-[1200px] flex items-center gap-[20px]">
+      <div className="mt-[20px] w-full max-w-[Min(1200px,90vw)] flex items-center justify-center gap-[20px]">
         <Input
           title="Số lượng ETH tối thiểu dùng để mua:"
           value={minEth}
@@ -103,7 +103,7 @@ export default function BuyConfig({ onPrev, onNext }: { onPrev: () => void, onNe
           onChange={e => setMaxEth(e.target.value)}
         />
       </div>
-      <div className="mt-[30px] flex flex-col w-full max-w-[1200px] border-2">
+      <div className="mt-[20px] flex flex-col w-full max-w-[Min(1200px,90vw)] border-2">
         <div className={classNames('flex items-center')}>
           <div className="w-[25%] p-[10px] font-bold">Ví phụ</div>
           <div className="w-[25%] border-l-2 p-[10px] font-bold">

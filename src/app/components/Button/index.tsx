@@ -15,7 +15,7 @@ const Button = React.forwardRef<
       <label
         htmlFor={props.htmlFor}
         className={classNames(
-          'h-[60px] mt-[20px] bg-[rgba(252,114,255,0.1)] w-full max-w-[600px] rounded-[10px] text-[rgb(252,114,255)] font-bold disabled:cursor-not-allowed opacity-80 cursor-pointer  flex justify-center items-center gap-[10px]',
+          'h-[40px] mt-[20px] bg-[rgba(252,114,255,0.1)] w-full max-w-[500px] rounded-[10px] text-[rgb(252,114,255)] font-bold disabled:cursor-not-allowed opacity-80 cursor-pointer  flex justify-center items-center gap-[10px] text-[14px]',
           props.className
         )}
       >
@@ -30,7 +30,7 @@ const Button = React.forwardRef<
       ref={ref}
       disabled={props.disabled || props.loading}
       className={classNames(
-        'h-[60px] mt-[20px] bg-[rgba(252,114,255,0.1)] w-full max-w-[600px] rounded-[10px] text-[rgb(252,114,255)] font-bold disabled:cursor-not-allowed opacity-80 flex justify-center items-center gap-[10px]',
+        'h-[40px] mt-[20px] bg-[rgba(252,114,255,0.1)] w-full max-w-[500px] rounded-[10px] text-[rgb(252,114,255)] font-bold disabled:cursor-not-allowed opacity-80 flex justify-center items-center gap-[10px] text-[14px]',
         props.className
       )}
     >

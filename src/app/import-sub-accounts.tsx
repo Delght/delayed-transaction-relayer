@@ -68,10 +68,10 @@ export default function ImportSubAccounts({
       <h1 className="text-4xl font-bold text-center text-[rgb(252,114,255)]">
         Nhập danh sách ví phụ  
       </h1>
-      <h2 className="mt-[20px] text-xl font-bold text-center">
+      <h2 className="mt-[20px] text-lg font-bold text-center">
         Ví chính: {mainAccount.address}
       </h2>
-      <div className="mt-[10px] text-lg flex items-center">
+      <div className="mt-[20px] text-base flex items-center">
         Số dư:{' '}
         {!loadingMainAccountBalance ? (
           renderTokenAmount(mainAccountBalance.balance)
@@ -80,7 +80,7 @@ export default function ImportSubAccounts({
         )}{' '}
         ETH
       </div>
-      <div className="text-lg flex items-center">
+      <div className="text-base flex items-center">
         Số dư {tokenInfo.symbol}:{' '}
         {!loadingMainAccountBalance ? (
           renderTokenAmount(mainAccountBalance.balanceToken)
@@ -90,7 +90,7 @@ export default function ImportSubAccounts({
         {tokenInfo.symbol}
       </div>
 
-      <div className='mt-[10px] text-[rgba(252,114,255,0.9)] cursor-pointer' onClick={() => {
+      <div className='mt-[20px] text-[rgba(252,114,255,0.9)] cursor-pointer' onClick={() => {
         onPrev()
       }}>
         Quay lại bước trước đó

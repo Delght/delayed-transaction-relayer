@@ -48,14 +48,14 @@ export default function WithdrawConfig({
         Rút ETH về ví chính
       </h1>
       <div
-        className="mt-[10px] text-[rgba(252,114,255,0.9)] cursor-pointer"
+        className="mt-[20px] text-[rgba(252,114,255,0.9)] cursor-pointer"
         onClick={() => {
           onPrev();
         }}
       >
         Quay lại bước trước đó
       </div>
-      <div className="mt-[30px] flex flex-col w-full max-w-[900px] border-2">
+      <div className="mt-[20px] flex flex-col w-full max-w-[900px] border-2">
         <div className={classNames('flex items-center')}>
           <div className="w-[50%] p-[10px] font-bold">Ví phụ</div>
           <div className="w-[50%] border-l-2 p-[10px] font-bold">Số dư ETH</div>

@@ -113,10 +113,10 @@ export default function TransferBalance({
       <h1 className="text-4xl font-bold text-center text-[rgb(252,114,255)]">
         Chuyển ETH sang ví phụ
       </h1>
-      <h2 className="mt-[20px] text-xl font-bold text-center">
+      <h2 className="mt-[20px] text-lg font-bold text-center">
         Ví chính: {mainAccount.address}
       </h2>
-      <div className="mt-[10px] text-lg flex items-center">
+      <div className="mt-[20px] text-base flex items-center">
         Số dư:{' '}
         {!loadingMainAccountBalance ? (
           renderTokenAmount(mainAccountBalance.balance)
@@ -125,7 +125,7 @@ export default function TransferBalance({
         )}{' '}
         ETH
       </div>
-      <div className="text-lg flex items-center">
+      <div className="text-base flex items-center">
         Số dư {tokenInfo.symbol}:{' '}
         {!loadingMainAccountBalance ? (
           renderTokenAmount(mainAccountBalance.balanceToken)
@@ -135,14 +135,14 @@ export default function TransferBalance({
         {tokenInfo.symbol}
       </div>
       <div
-        className="mt-[10px] text-[rgba(252,114,255,0.9)] cursor-pointer"
+        className="mt-[20px] text-[rgba(252,114,255,0.9)] cursor-pointer"
         onClick={() => {
           onPrev();
         }}
       >
         Quay lại bước trước đó
       </div>
-      <div className="mt-[20px] flex flex-col w-full max-w-[1200px] border-2">
+      <div className="mt-[20px] flex flex-col w-full max-w-[Min(1200px,90vw)] border-2">
         <div className={classNames('flex items-center')}>
           <div className="w-[25%] p-[10px] font-bold">Ví phụ</div>
           <div className="w-[25%] border-l-2 p-[10px] font-bold">

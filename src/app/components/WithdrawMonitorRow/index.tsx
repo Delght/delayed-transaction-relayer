@@ -45,12 +45,12 @@ export default function WithdrawMonitorRow({
   return (
     <div
       key={withdrawParam.address}
-      className={classNames('h-[50px] flex items-center border-t-2')}
+      className={classNames('min-h-[40px] flex items-stretch border-t-2 break-all')}
     >
-      <div className="w-[30%] h-full flex items-center px-[10px]">
+      <div className="w-[30%] flex items-center px-[10px] text-[14px]">
         {ellipsisAddress(withdrawParam.address)}
       </div>
-      <div className="w-[30%] h-full border-l-2 flex items-center px-[10px]">
+      <div className="w-[30%] border-l-2 flex items-center px-[10px] text-[14px]">
         {loadingBalance ? (
           <Loading size={20} />
         ) : (
@@ -60,7 +60,7 @@ export default function WithdrawMonitorRow({
       </div>
       <div
         className={classNames(
-          'w-[40%] h-full border-l-2 flex items-center gap-[5px] px-[10px]',
+          'w-[40%] border-l-2 flex items-center gap-[5px] px-[10px] text-[14px]',
           {
             'text-orange-300': status === 'waiting',
             'text-green-300 cursor-pointer': status.startsWith('0x'),

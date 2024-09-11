@@ -55,7 +55,7 @@ export default function Config({
       <h1 className="text-4xl font-bold text-center text-[rgb(252,114,255)]">
         Cấu hình
       </h1>
-      <div className='mt-[30px] w-full flex justify-center'>
+      <div className='mt-[20px] w-full flex justify-center'>
         <Input
           value={privateKey}
           title="Private key account chính:"
@@ -63,7 +63,7 @@ export default function Config({
           placeholder="Nhập private key"
         />
       </div>
-      <div className='mt-[30px] w-full flex justify-center'>
+      <div className='mt-[20px] w-full flex justify-center'>
         <Input
           value={tokenAddress}
           title='Token Address:'
@@ -71,7 +71,7 @@ export default function Config({
           placeholder="Nhập token address"
         />
       </div>
-      <div className='mt-[30px] w-full flex justify-center'>
+      <div className='mt-[20px] w-full flex justify-center'>
         <Input
           title='Token Symbol:'
           value={tokenSymbol}
@@ -79,7 +79,7 @@ export default function Config({
           placeholder="Nhập token symbol"
         />
       </div>
-      <div className='mt-[30px] w-full flex justify-center'>
+      <div className='mt-[20px] w-full flex justify-center'>
         <Input
           title='Token Decimals:'
           value={tokenDecimals}
