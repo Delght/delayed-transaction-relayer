@@ -3,6 +3,7 @@ import { Mutex } from "async-mutex";
 import { encodeFunctionData } from "viem";
 import { logger } from "../../utils/logger";
 import { config } from "../../config/config";
+import { GAS_PRICE_MULTIPLIER, GAS_LIMIT_MULTIPLIER, GAS_TRANSFER_LIMIT } from "../../config/constants";
 import { TransactionDataCalculator } from "./calculator";
 import type { Account, PrivateKeyAccount, PublicClient, WalletClient } from "viem";
 import type { TransactionData, TransactionWithDeadline, QueuedTransaction, TrackedTransaction, TransactionManagerParams } from "../../types/types";
@@ -141,7 +142,7 @@ export class TransactionManager {
       if (transactionsToProcess.length > 0) {
         logger.info(
           `TransactionManager.processQueue: Transactions to process: ${transactionsToProcess
-            .map((tx) => tx.txData.functionName)
+            .map((tx) => tx.txData.functionName === '' ? 'transfer native' : tx.txData.functionName)
             .join(", ")}`
         );
         await this.processTransactions(transactionsToProcess);
@@ -229,7 +230,7 @@ export class TransactionManager {
     );
 
     const currentGasPrice = await this.client.getGasPrice();
-    const gasPrice = currentGasPrice + BigInt(Math.floor(Number(currentGasPrice) * 0.1)); // 10% buffer
+    const gasPrice = BigInt(Math.floor(Number(currentGasPrice) * GAS_PRICE_MULTIPLIER));
     const { txHash, receipt } = await this.sendTransaction(txData, walletClient, gasPrice);
 
     const nonce = await walletClient.account?.nonceManager?.get({
@@ -459,10 +460,8 @@ export class TransactionManager {
     tx: TransactionData,
     walletClient: WalletClient
   ) {
-    const defaultGasLimit = BigInt(1_000_000);
-
     if (tx.abi.length === 0 || tx.functionName === '') {
-      return 21000;
+      return BigInt(GAS_TRANSFER_LIMIT);
     }
 
     try {
@@ -479,8 +478,7 @@ export class TransactionManager {
         value: tx.value,
       });
 
-      const gasLimit =
-        gasEstimate + BigInt(Math.floor(Number(gasEstimate) * 0.1));
+      const gasLimit = BigInt(Math.floor(Number(gasEstimate) * GAS_LIMIT_MULTIPLIER));
 
       return gasLimit;
     } catch (error) {
@@ -488,7 +486,7 @@ export class TransactionManager {
         `Failed to estimate gas: ${error instanceof Error ? error.message : String(error)
         }`
       );
-      return defaultGasLimit;
+      return BigInt(GAS_TRANSFER_LIMIT);
     }
   }
 
@@ -505,11 +503,6 @@ export class TransactionManager {
     gasPrice: bigint
   ): Promise<{ txHash: `0x${string}`; receipt: any }> {
     const gasLimit = await this.estimateGasWithFallback(txData, walletClient);
-
-    logger.info(
-      `TransactionManager.sendTransaction: Gas limit: ${gasLimit}`
-    );
-
     let txHash: `0x${string}`;
 
     if (txData.functionName === '' || txData.abi.length === 0) {
@@ -517,7 +510,7 @@ export class TransactionManager {
         account: walletClient.account as Account,
         to: txData.address,
         value: txData.value,
-        gas: BigInt(gasLimit),
+        gas: gasLimit,
         gasPrice,
         chain: this.client.chain
       });

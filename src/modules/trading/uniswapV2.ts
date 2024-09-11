@@ -5,6 +5,7 @@ import {
   UNISWAP_V2_ROUTER_ABI,
   ERC20_ABI,
   MAX_UINT256,
+  GAS_TRANSFER_LIMIT,
 } from '../../config/constants';
 import type {
   TransactionData,
@@ -152,9 +153,9 @@ export class UniswapV2 {
         address: accountPair.account.address,
       });
       const price = await this.client.getGasPrice();
-      const gasPrice = BigInt(Math.floor(Number(price) * 1.1));
-      const gasLimit = BigInt(21000);
-      const gasCost = gasPrice * gasLimit;
+      const gasPrice = BigInt(Math.floor(Number(price) * 1.15)); // Special case for transferAllToMain
+      const gasLimit = BigInt(GAS_TRANSFER_LIMIT);
+      const gasCost = gasPrice * gasLimit ;
 
       const amountToTransfer = balance - gasCost;
 
