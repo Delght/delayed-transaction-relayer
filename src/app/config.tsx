@@ -22,7 +22,7 @@ export default function Config({
     chainId: ChainId
   }) => void;
 }) {
-  const { mainAccount, tokenInfo } = useAppConfig();
+  const { mainAccount, tokenInfo, chainId: chainDefault } = useAppConfig();
   const [privateKey, setPrivateKey] = useState<string>(
     mainAccount?.privateKey || ''
   );
@@ -36,7 +36,7 @@ export default function Config({
     `${tokenInfo?.decimals || ''}`
   );
 
-  const [chainId, setChainId] = useState<string>(`${ChainsSupported[0].chainId}`);
+  const [chainId, setChainId] = useState<string>(`${chainDefault || ChainsSupported[0].chainId}`);
 
   const handleNext = () => {
     const pk: `0x${string}` = privateKey.startsWith('0x')
