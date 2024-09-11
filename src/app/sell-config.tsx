@@ -20,13 +20,12 @@ export default function SellConfig({
   const { subAccounts, tokenInfo, handleSell, handleApprove,chainId } = useAppConfig();
 
   const subAccountsWithAmount = useMemo<SubAccountWithAmount[]>(() => {
-    const result = subAccounts.map(account => {
-      return {
+    return subAccounts
+      .filter(account => new BigNumber(account.balanceToken).isGreaterThan(0))
+      .map(account => ({
         ...account,
-        amount: BigNumber(account.balanceToken).toFixed(18),
-      };
-    });
-    return result;
+        amount: new BigNumber(account.balanceToken).toFixed(18),
+      }));
   }, [subAccounts]);
 
   const [subAccountsWithAmountLocal, setSubAccountsWithAmountLocal] = useState<

@@ -8,6 +8,7 @@ import { generateShortId, randomNumber } from '../utils/function';
 import { BuyParam, SubAccountWithAmount } from './type';
 import BigNumber from 'bignumber.js';
 import { parseEther } from 'viem';
+import { MIN_BALANCE_THRESHOLD } from '../config/constants';
 
 const minDefault = 0.005;
 const maxDefault = 0.01;
@@ -51,6 +52,12 @@ export default function BuyConfig({ onPrev, onNext }: { onPrev: () => void, onNe
     SubAccountWithAmount[]
   >(subAccountsWithAmount);
 
+  const filteredSubAccountsWithAmount = useMemo(() => {
+    return subAccountsWithAmountLocal.filter(account => {
+      return account.balanceWei > MIN_BALANCE_THRESHOLD;
+    });
+  }, [subAccountsWithAmountLocal]);
+  
   const onChangeAmount = (address: string, amount: string) => {
     const clone = [...subAccountsWithAmountLocal];
     const index = clone.findIndex(account => account.address === address);
@@ -61,16 +68,18 @@ export default function BuyConfig({ onPrev, onNext }: { onPrev: () => void, onNe
   };
 
   const onBuy = async () => {
-    const buyParams = subAccountsWithAmountLocal.map(account => {
-      if (!account.amount || Number.isNaN(Number(account.amount)) || Number(account.amount) <= 0) {
-        return null;
-      }
-      return {
-        id: generateShortId(),
-        address: account.address,
-        ethToSwap: parseEther(account.amount),
-      };
-    }).filter(i => !!i)
+    const buyParams = subAccountsWithAmountLocal
+      .filter(account => account.balanceWei > MIN_BALANCE_THRESHOLD)
+      .map(account => {
+        if (!account.amount || Number.isNaN(Number(account.amount)) || Number(account.amount) <= 0) {
+          return null;
+        }
+        return {
+          id: generateShortId(),
+          address: account.address,
+          ethToSwap: parseEther(account.amount),
+        };
+      }).filter(i => !!i)
 
     await handleBuy(buyParams);
     onNext(buyParams);
@@ -107,7 +116,7 @@ export default function BuyConfig({ onPrev, onNext }: { onPrev: () => void, onNe
         <div className={classNames('flex items-center')}>
           <div className="w-[25%] p-[10px] font-bold">Ví phụ</div>
           <div className="w-[25%] border-l-2 p-[10px] font-bold">
-            Số dự ETH
+            Số dư ETH
           </div>
           <div className="w-[25%] border-l-2 p-[10px] font-bold">
             Số dư {tokenInfo.symbol}
@@ -116,7 +125,7 @@ export default function BuyConfig({ onPrev, onNext }: { onPrev: () => void, onNe
             Số lượng ETH mua
           </div>
         </div>
-        {subAccountsWithAmountLocal.map(account => (
+        {filteredSubAccountsWithAmount.map(account => (
           <BuyAccountRow
             key={account.address}
             account={account}
