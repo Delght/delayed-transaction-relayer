@@ -17,7 +17,7 @@ export default function SellConfig({
   onPrev: () => void;
   onNext: (sellParam: SellOrApproveMonitor[]) => void;
 }) {
-  const { subAccounts, tokenInfo, handleSell, handleApprove } = useAppConfig();
+  const { subAccounts, tokenInfo, handleSell, handleApprove,chainId } = useAppConfig();
 
   const subAccountsWithAmount = useMemo<SubAccountWithAmount[]>(() => {
     const result = subAccounts.map(account => {
@@ -44,7 +44,7 @@ export default function SellConfig({
   };
 
   const onSell = async () => {
-    const publicClient = getPublicClient();
+    const publicClient = getPublicClient(chainId);
 
     const erc20Contract = getContract({
       abi: erc20Abi,

@@ -3,6 +3,7 @@ import { getPublicClient } from '../../client';
 import { erc20Abi, formatEther, formatUnits, getContract } from 'viem';
 import { useMemo } from 'react';
 import useAppConfig from './useAppConfig';
+import { ChainId } from '../../config/chains';
 
 export type AccountBalance = {
   balanceWei: bigint;
@@ -12,14 +13,15 @@ export type AccountBalance = {
 };
 
 export default function useBalance(userAddress: `0x${string}`) {
-  const { tokenInfo } = useAppConfig();
+  const { tokenInfo, chainId } = useAppConfig();
   const { data: balanceData, isLoading, refetch } = useQuery({
     enabled: !!tokenInfo && !!tokenInfo?.address && !!userAddress,
-    queryKey: ['balance', userAddress, tokenInfo.address],
+    queryKey: ['balance', userAddress, tokenInfo.address, chainId],
     queryFn: async ({ queryKey }) => {
       const userAddress = queryKey[1] as `0x${string}`;
       const tokenAddress = queryKey[2] as `0x${string}`;
-      const publicClient = getPublicClient()
+      const chainId = queryKey[3] as ChainId;
+      const publicClient = getPublicClient(chainId)
       const erc20Contract = getContract({
         abi: erc20Abi,
         address: tokenAddress,

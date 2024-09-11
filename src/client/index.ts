@@ -1,15 +1,17 @@
 import { createPublicClient, createWalletClient, http } from 'viem';
-import { sepolia } from 'viem/chains';
-import { config } from '../config/config';
 import { privateKeyToAccount } from 'viem/accounts';
+import { ChainData, ChainId } from '../config/chains';
 
-const customHttpTransport = http(config.RPC_URL);
+export const getPublicClient = (chainId: ChainId = 11155111) => {
+  const chainData = ChainData[chainId]
 
-export const getPublicClient = (chainId?: number) => {
-  console.log('getPublicClient', chainId);
+  if (!chainData) {
+    throw new Error('Chain not supported');
+  }
+
   const publicClient = createPublicClient({
-    chain: sepolia,
-    transport: customHttpTransport,
+    chain: chainData.viemChain,
+    transport: http(chainData.rpcUrl),
     batch: {
       multicall: {
         batchSize: 10240,
@@ -17,19 +19,23 @@ export const getPublicClient = (chainId?: number) => {
       },
     },
   });
-
   return publicClient;
 };
 
 export const getWalletClient = (
   privateKey: `0x${string}`,
-  chainId?: number
+  chainId: ChainId = 11155111
 ) => {
-  console.log('getWalletClient', chainId);
+  const chainData = ChainData[chainId];
+
+  if (!chainData) {
+    throw new Error('Chain not supported');
+  }
+
   const walletClient = createWalletClient({
     account: privateKeyToAccount(privateKey),
-    chain: sepolia,
-    transport: customHttpTransport,
+    chain: chainData.viemChain,
+    transport: http(chainData.rpcUrl),
   });
 
   return walletClient;

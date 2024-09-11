@@ -26,6 +26,7 @@ import BuyMonitor from './buy-monitor';
 import SellMonitor from './sell-monitor';
 import WithdrawConfig from './withdraw-config';
 import WithdrawMonitor from './withdraw-monitor';
+import { ChainId, ChainsSupported } from '../config/chains';
 
 enum Step {
   Config = 'config',
@@ -43,6 +44,7 @@ enum Step {
 export default function App() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<Step>(Step.Config);
+  const [chainId, setChainId] = useState<ChainId>(ChainsSupported[0].chainId);
   const [mainAccount, setMainAccount] = useState<AddressKeyPair>({
     address: '0xA2ff93e1488849FD443c457D4C569B68F7C80f1d',
     privateKey:
@@ -62,11 +64,11 @@ export default function App() {
   const [withdrawMonitors, setWithdrawMonitors] = useState<WithdrawParam[]>([]);
 
   const getBalances = useCallback(async () => {
-    if (!tokenInfo || !subAccountsKey.length) {
+    if (!tokenInfo || !subAccountsKey.length || !chainId) {
       return [];
     }
     setLoading(true);
-    const publicClient = getPublicClient();
+    const publicClient = getPublicClient(chainId);
     const erc20Contract = getContract({
       abi: erc20Abi,
       address: tokenInfo.address,
@@ -91,7 +93,7 @@ export default function App() {
     );
     setLoading(false);
     setSubAccounts(accounts);
-  }, [subAccountsKey, tokenInfo]);
+  }, [subAccountsKey, tokenInfo, chainId]);
 
   useEffect(() => {
     (async () => {
@@ -104,12 +106,12 @@ export default function App() {
       return null;
     }
 
-    const publicClient = getPublicClient();
+    const publicClient = getPublicClient(chainId);
     const accounts = subAccountsKey.map(pair => {
       const account = privateKeyToAccount(pair.privateKey, {
         nonceManager,
       });
-      const walletClient = getWalletClient(pair.privateKey);
+      const walletClient = getWalletClient(pair.privateKey, chainId);
       return { account, walletClient };
     });
 
@@ -126,9 +128,7 @@ export default function App() {
     const trading = new UniswapV2(publicClient, transactionManager, tokenInfo.address);
 
     return trading;
-  }, [subAccountsKey, tokenInfo]);
-
-  // console.log({ tradingModule });
+  }, [subAccountsKey, tokenInfo, chainId]);
 
   const handleBuy = useCallback(
     async (buyParams: BuyParam[]) => {
@@ -228,6 +228,7 @@ export default function App() {
   return (
     <AppContext.Provider
       value={{
+        chainId,
         mainAccount,
         subAccounts,
         tokenInfo,
@@ -248,6 +249,7 @@ export default function App() {
               onNext={data => {
                 setMainAccount(data.account);
                 setTokenInfo(data.tokenInfo);
+                setChainId(data.chainId);
                 setStep(Step.ImportSubAccount);
               }}
             />

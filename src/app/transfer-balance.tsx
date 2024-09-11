@@ -20,7 +20,7 @@ export default function TransferBalance({
   onNext: () => void;
   onPrev: () => void;
 }) {
-  const { mainAccount, subAccounts, tokenInfo, reloadBalance } = useAppConfig();
+  const { mainAccount, subAccounts, tokenInfo, reloadBalance, chainId } = useAppConfig();
   const { data: mainAccountBalance, isLoading: loadingMainAccountBalance } =
     useBalance(mainAccount.address);
 
@@ -95,6 +95,7 @@ export default function TransferBalance({
           ],
         }),
         value: parseEther(totalNativeNeedTransfer.toFixed()),
+        chainId,
       });
 
       setSubAccountTransfers({});
@@ -106,7 +107,7 @@ export default function TransferBalance({
       toast.error('Transfer error!!');
       setLoading(false);
     }
-  }, [formatData, mainAccount, reloadBalance]);
+  }, [formatData, mainAccount, reloadBalance, chainId]);
 
   return (
     <div className="w-full flex flex-col justify-center items-center">

@@ -1,3 +1,4 @@
+import { ChainId } from '../config/chains';
 import { AddressKeyPair } from '../utils/generate';
 
 export type TokenInfo = {
@@ -7,6 +8,7 @@ export type TokenInfo = {
 };
 
 export type AppContextType = {
+  chainId: ChainId,
   mainAccount: AddressKeyPair;
   subAccounts: SubAccount[];
   tokenInfo: TokenInfo;

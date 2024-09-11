@@ -6,6 +6,8 @@ import { AddressKeyPair } from '../utils/generate';
 import { privateKeyToAddress } from 'viem/accounts';
 import { isAddress } from 'viem';
 import useAppConfig from './hooks/useAppConfig';
+import Select from './components/Select';
+import { ChainId, ChainsSupported } from '../config/chains';
 
 export default function Config({
   onNext,
@@ -17,6 +19,7 @@ export default function Config({
       symbol: string;
       decimals: number;
     };
+    chainId: ChainId
   }) => void;
 }) {
   const { mainAccount, tokenInfo } = useAppConfig();
@@ -33,6 +36,8 @@ export default function Config({
     `${tokenInfo?.decimals || ''}`
   );
 
+  const [chainId, setChainId] = useState<string>(`${ChainsSupported[0].chainId}`);
+
   const handleNext = () => {
     const pk: `0x${string}` = privateKey.startsWith('0x')
       ? (privateKey as `0x${string}`)
@@ -47,6 +52,7 @@ export default function Config({
         symbol: tokenSymbol,
         decimals: Number(tokenDecimals),
       },
+      chainId: Number(chainId) as ChainId,
     });
   };
 
@@ -85,6 +91,14 @@ export default function Config({
           value={tokenDecimals}
           onChange={e => setTokenDecimals(e.target.value)}
           placeholder="Nhập token decimals"
+        />
+      </div>
+      <div className='mt-[20px] w-full flex justify-center'>
+        <Select
+          title='Chain:'
+          value={chainId}
+          onChange={(e) => setChainId(e.target.value)}
+          options={ChainsSupported.map(i => ({ label: i.chainName, value: `${i.chainId}` }))}
         />
       </div>
       <Button

@@ -1,8 +1,10 @@
 import { AppContextType, TokenInfo } from './type';
 import { AddressKeyPair } from '../utils/generate';
 import { createContext } from 'react';
+import { ChainsSupported } from '../config/chains';
 
 export const AppContext = createContext<AppContextType>({
+  chainId: ChainsSupported[0].chainId,
   mainAccount: undefined as unknown as AddressKeyPair,
   subAccounts: [],
   buyMonitors: [],
