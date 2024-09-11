@@ -25,14 +25,12 @@
     "react-device-detect": "^2.2.3",
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.4.1",
-    "react-if": "^4.1.5",
     "react-media": "^1.10.0",
     "react-router-dom": "^6.26.1",
     "styled-components": "^6.1.13",
     "tinyqueue": "^3.0.0",
     "viem": "^2.21.4",
-    "vite-plugin-pwa": "^0.20.0",
-    "zod": "^3.23.8"
+    "vite-plugin-pwa": "^0.20.0"
   },
   "devDependencies": {
     "@types/crypto-js": "^4.2.2",

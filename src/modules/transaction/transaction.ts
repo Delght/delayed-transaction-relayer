@@ -10,7 +10,7 @@ import type { TransactionData, TransactionWithDeadline, QueuedTransaction, Track
 import Observer from "../../utils/observer";
 
 export class TransactionManager {
-  private static instance: TransactionManager | null = null;  // Static instance to enforce Singleton pattern
+  private static instance: TransactionManager | null = null;
 
   private queue: TinyQueue<QueuedTransaction>;
   private readonly accounts: Array<{ account: PrivateKeyAccount, walletClient: WalletClient}>;
@@ -28,36 +28,20 @@ export class TransactionManager {
   private readonly calculator: TransactionDataCalculator;
 
   private constructor(params: TransactionManagerParams) {
-    this.queue = new TinyQueue<QueuedTransaction>(
-      [],
-      (a, b) => {
-        // Priority for approve transactions
-        if (a.txData.functionName === 'approve' && b.txData.functionName !== 'approve') return -1;
-
-        if (a.txData.functionName !== 'approve' && b.txData.functionName === 'approve') return 1;
-
-        // If both are 'approve' or both are not 'approve', sort by notBefore
-        return Number(a.notBefore ?? 0n) - Number(b.notBefore ?? 0n);
-      }
-    );
+    this.queue = new TinyQueue<QueuedTransaction>([], this.compareTransactions);
     this.accounts = params.accounts;
     this.client = params.client;
     this.queueInterval = params.queueInterval || 1000;
     this.maxRetries = params.maxRetries || 3;
     this.queueMutex = new Mutex();
-    this.batchSize = params.batchSize || 5;
+    this.batchSize = params.batchSize || 2;
     this.trackedTransactions = new Map<`0x${string}`, TrackedTransaction>();
     this.trackedTransactionsMutex = new Mutex();
     this.removalSet = new Set<`0x${string}`>();
     this.removalSetMutex = new Mutex();
     this.monitorPendingTxsInterval = params.monitorPendingTxsInterval || 1000;
     this.delayedQueue = [];
-    this.calculator =
-      params.calculator ||
-      new TransactionDataCalculator(
-        this.client,
-        config.UNISWAP_V2_ROUTER_ADDRESS
-      );
+    this.calculator = params.calculator || new TransactionDataCalculator(this.client, config.UNISWAP_V2_ROUTER_ADDRESS);
   }
 
   // Public method to get the instance of the TransactionManager
@@ -78,11 +62,6 @@ export class TransactionManager {
     this.monitorPendingTxs();
   }
 
-  /**
-   * Adds a transaction to the queue for a specific account.
-   * @param transactionWithDeadline Transaction data and deadline
-   * @param account The account to associate with the transaction
-   */
   public async addTransaction(transactionWithDeadline: TransactionWithDeadline, account: PrivateKeyAccount) {
     const walletClient = this.getWalletClient(account);
     if (!walletClient) {
@@ -154,11 +133,6 @@ export class TransactionManager {
     }
   }
 
-  /**
-   * Processes the transactions in the queue by submitting them to the chain.
-   * @param transactionsToProcess The transactions to process
-   * @returns A promise that resolves when the transactions are processed
-   */
   private async processTransactions(transactionsToProcess: QueuedTransaction[]) {
     await Promise.allSettled(transactionsToProcess.map(async (queueTransaction) => {
         const { account, walletClient, deadline, retries, id } = queueTransaction;
@@ -181,7 +155,7 @@ export class TransactionManager {
               deadline,
               retries,
               submittedAt: currentBlockTimestamp,
-              nonce: BigInt(trackedTxData.nonce),
+              nonce: BigInt(trackedTxData.nonce || 0),
             });
           });
 
@@ -219,12 +193,6 @@ export class TransactionManager {
     );
   }
 
-  /**
-   * Submits a transaction using the correct WalletClient.
-   * @param txData The transaction data
-   * @param walletClient The WalletClient to use for submitting the transaction
-   * @returns A promise with the transaction receipt and tracked transaction data
-   */
   private async submitTransaction(txData: TransactionData, walletClient: WalletClient) {
     logger.info(
       `TransactionManager.submitTransaction: Submitting transaction: ${txData.functionName}`
@@ -250,12 +218,6 @@ export class TransactionManager {
     return { receipt, trackedTxData };
   }
 
-  /**
-   * Requeues delayed transactions that are ready to be processed.
-   * @param delayedQueue The queue of delayed transactions
-   * @param currentBlockTimestamp The current block timestamp
-   * @returns A promise that resolves when the delayed transactions are requeued
-   */
   private async requeueDelayedTransactions(
     delayedQueue: QueuedTransaction[],
     currentBlockTimestamp: bigint
@@ -283,10 +245,6 @@ export class TransactionManager {
     }
   }
 
-  /**
-   * Removes expired transactions from the queue.
-   * @param currentBlockTimestamp The current block timestamp
-   */
   private removeExpiredTransactions(currentBlockTimestamp: bigint) {
     while (
       this.queue &&
@@ -386,10 +344,7 @@ export class TransactionManager {
     }
   }
 
-  /**
-   * Speeds up a transaction by increasing the gas price.
-   * @param txHash The hash of the transaction to speed up
-   */
+
   private async speedUpTransaction(txHash: `0x${string}`) {
     await this.trackedTransactionsMutex.runExclusive(async () => {
       const trackedTx = this.trackedTransactions.get(txHash);
@@ -423,11 +378,7 @@ export class TransactionManager {
     });
   }
 
-  /**
-   * Drops a transaction from the queue.
-   * @param txHash The hash of the transaction to drop
-   * @returns A promise that resolves when the transaction is dropped
-   */
+
   private async dropTransaction(txHash: `0x${string}`) {
     await this.trackedTransactionsMutex.runExclusive(() => {
       this.trackedTransactions.delete(txHash); // Delete the transaction from trackedTransactions
@@ -491,13 +442,7 @@ export class TransactionManager {
     }
   }
 
-  /**
-   * Sends a transaction to the chain.
-   * @param txData The transaction data
-   * @param walletClient The WalletClient to use for submitting the transaction
-   * @param gasPrice The gas price to use for the transaction
-   * @returns The transaction hash and receipt
-   */
+
   private async sendTransaction(
     txData: TransactionData,
     walletClient: WalletClient,
@@ -540,10 +485,7 @@ export class TransactionManager {
     return { txHash, receipt };
   }
 
-  /**
-   * Retrieves the WalletClient associated with a given account.
-   * @param account The account to retrieve the WalletClient for.
-   */
+
   private getWalletClient(account: PrivateKeyAccount): WalletClient | undefined {
     const accountInfo = this.accounts.find(
       (acc) => acc.account.address === account.address
@@ -551,10 +493,7 @@ export class TransactionManager {
     return accountInfo?.walletClient;
   }
 
-  /**
-   * Gets the current block timestamp.
-   * @returns The current block timestamp as a bigint
-   */
+
   private async getCurrentBlockTimestamp(): Promise<bigint> {
     const block = await this.client.getBlock();
     return BigInt(block.timestamp);
@@ -628,5 +567,12 @@ export class TransactionManager {
     );
 
     return queuedTransaction.txData;
+  }
+
+  // TODO: refactor this later
+  private compareTransactions(a: QueuedTransaction, b: QueuedTransaction): number {
+    if (a.txData.functionName === 'approve' && b.txData.functionName !== 'approve') return -1;
+    if (a.txData.functionName !== 'approve' && b.txData.functionName === 'approve') return 1;
+    return Number(a.notBefore ?? 0n) - Number(b.notBefore ?? 0n);
   }
 }
