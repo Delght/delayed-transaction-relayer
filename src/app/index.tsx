@@ -118,7 +118,7 @@ export default function App() {
     const transactionManager = TransactionManager.getInstance({
       accounts,
       client: publicClient,
-      queueInterval: 12000, // 12 seconds
+      queueInterval: 12000,
       maxRetries: 2,
       batchSize: 10, // 5 transactions per batch
       monitorPendingTxsInterval: 12000, // 12 seconds
