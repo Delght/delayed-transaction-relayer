@@ -31,11 +31,12 @@ export class TransactionManager {
     this.queue = new TinyQueue<QueuedTransaction>(
       [],
       (a, b) => {
-        // priority for approve transaction
+        // Priority for approve transactions
         if (a.txData.functionName === 'approve' && b.txData.functionName !== 'approve') return -1;
 
         if (a.txData.functionName !== 'approve' && b.txData.functionName === 'approve') return 1;
 
+        // If both are 'approve' or both are not 'approve', sort by notBefore
         return Number(a.notBefore ?? 0n) - Number(b.notBefore ?? 0n);
       }
     );
