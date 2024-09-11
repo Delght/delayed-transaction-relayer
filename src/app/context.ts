@@ -7,9 +7,11 @@ export const AppContext = createContext<AppContextType>({
   subAccounts: [],
   buyMonitors: [],
   sellMonitors: [],
+  withdrawMonitors: [],
   tokenInfo: undefined as unknown as TokenInfo,
   reloadBalance: async () => {},
   handleBuy: async () => {},
   handleSell: async () => {},
   handleApprove: async () => {},
+  handleWithdraw: async () => {},
 });

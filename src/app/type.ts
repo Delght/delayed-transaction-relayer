@@ -12,10 +12,12 @@ export type AppContextType = {
   tokenInfo: TokenInfo;
   buyMonitors: BuyParam[];
   sellMonitors: SellOrApproveMonitor[];
+  withdrawMonitors: WithdrawParam[];
   reloadBalance: () => Promise<any>;
   handleBuy: (buyParams: BuyParam[]) => Promise<void>;
   handleSell: (sellParams: SellParam[]) => Promise<void>;
   handleApprove: (approveParams: ApproveParam[]) => Promise<void>;
+  handleWithdraw: (withdrawParams: WithdrawParam[]) => Promise<void>;
 };
 
 export type BuyParam = {
@@ -40,6 +42,11 @@ export type SellOrApproveMonitor = {
   address: `0x${string}`;
   amountToSell: bigint;
   type: 'sell' | 'approve';
+}
+
+export type WithdrawParam = {
+  id: string;
+  address: `0x${string}`;
 }
 
 export type SubAccount = AddressKeyPair & {

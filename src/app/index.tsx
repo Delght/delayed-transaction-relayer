@@ -10,6 +10,7 @@ import {
   SellParam,
   SubAccount,
   TokenInfo,
+  WithdrawParam,
 } from './type';
 import { AppContext } from './context';
 import ChooseMethod from './choose-method';
@@ -23,6 +24,8 @@ import { privateKeyToAccount, nonceManager } from 'viem/accounts';
 import { UniswapV2 } from '../modules/trading/uniswapV2';
 import BuyMonitor from './buy-monitor';
 import SellMonitor from './sell-monitor';
+import WithdrawConfig from './withdraw-config';
+import WithdrawMonitor from './withdraw-monitor';
 
 enum Step {
   Config = 'config',
@@ -33,6 +36,8 @@ enum Step {
   Sell = 'sell',
   BuyMonitor = 'buy-monitor',
   SellMonitor = 'sell-monitor',
+  Withdraw = 'withdraw',
+  WithdrawMonitor = 'withdraw-monitor',
 }
 
 export default function App() {
@@ -54,6 +59,7 @@ export default function App() {
   const [subAccounts, setSubAccounts] = useState<SubAccount[]>([]);
   const [buyMonitors, setBuyMonitors] = useState<BuyParam[]>([]);
   const [sellMonitors, setSellMonitors] = useState<SellOrApproveMonitor[]>([]);
+  const [withdrawMonitors, setWithdrawMonitors] = useState<WithdrawParam[]>([]);
 
   const getBalances = useCallback(async () => {
     if (!tokenInfo || !subAccountsKey.length) {
@@ -191,13 +197,33 @@ export default function App() {
           id: approveParam.id,
           account: privateKeyToAccount(privateKey, { nonceManager }),
         };
-      })
+      });
 
       tradingModule.lazyApprove(accountsApprove);
-      
     },
     [tradingModule, subAccountsKey]
   );
+
+  const handleWithdraw = useCallback(async (withdrawParams: WithdrawParam[]) => {
+    if (!tradingModule) {
+      throw new Error('Trading module is not initialized');
+    }
+
+    const accountsWithdraw = withdrawParams.map(withdrawParam => {
+      const privateKey = subAccountsKey.find(
+        pair => pair.address === withdrawParam.address
+      )?.privateKey;
+      if (!privateKey) {
+        throw new Error('Private key not found');
+      }
+      return {
+        id: withdrawParam.id,
+        account: privateKeyToAccount(privateKey, { nonceManager }),
+      };
+    });
+
+    tradingModule.transferAllToMain(accountsWithdraw, mainAccount.address);
+  }, [tradingModule, subAccountsKey, mainAccount])
 
   return (
     <AppContext.Provider
@@ -207,10 +233,12 @@ export default function App() {
         tokenInfo,
         buyMonitors,
         sellMonitors,
+        withdrawMonitors,
         reloadBalance: getBalances,
         handleBuy,
         handleSell,
         handleApprove,
+        handleWithdraw,
       }}
     >
       <div className="min-h-screen flex flex-col justify-center items-center p-[20px]">
@@ -256,6 +284,9 @@ export default function App() {
               onSell={() => {
                 setStep(Step.Sell);
               }}
+              onWithdraw={() => {
+                setStep(Step.Withdraw);
+              }}
             />
           )}
           {step === Step.Buy && (
@@ -294,6 +325,26 @@ export default function App() {
               }}
             />
           )}
+          {step === Step.Withdraw && (
+            <WithdrawConfig
+              onPrev={() => {
+                setStep(Step.ChooseMethod);
+              }}
+              onNext={withdrawParams => {
+                setWithdrawMonitors(withdrawParams);
+                setStep(Step.WithdrawMonitor);
+              }}
+            />
+          )}
+          {
+            step === Step.WithdrawMonitor && (
+              <WithdrawMonitor
+                onPrev={() => {
+                  setStep(Step.Config);
+                }}
+              />
+            )
+          }
         </>
       </div>
       {loading && (
