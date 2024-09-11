@@ -62,12 +62,15 @@ export default function BuyConfig({ onPrev, onNext }: { onPrev: () => void, onNe
 
   const onBuy = async () => {
     const buyParams = subAccountsWithAmountLocal.map(account => {
+      if (!account.amount || Number.isNaN(Number(account.amount)) || Number(account.amount) <= 0) {
+        return null;
+      }
       return {
         id: generateShortId(),
         address: account.address,
         ethToSwap: parseEther(account.amount),
       };
-    })
+    }).filter(i => !!i)
 
     await handleBuy(buyParams);
     onNext(buyParams);

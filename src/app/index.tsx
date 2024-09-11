@@ -55,8 +55,6 @@ export default function App() {
   const [buyMonitors, setBuyMonitors] = useState<BuyParam[]>([]);
   const [sellMonitors, setSellMonitors] = useState<SellOrApproveMonitor[]>([]);
 
-  console.log(buyMonitors);
-
   const getBalances = useCallback(async () => {
     if (!tokenInfo || !subAccountsKey.length) {
       return [];
