@@ -26,7 +26,8 @@ import BuyMonitor from './buy-monitor';
 import SellMonitor from './sell-monitor';
 import WithdrawConfig from './withdraw-config';
 import WithdrawMonitor from './withdraw-monitor';
-import { ChainId, ChainsSupported } from '../config/chains';
+import { ChainId, ChainsSupported, ChainData } from '../config/chains';
+import { DEFAULT_BLOCK_TIME, DEFAULT_MAX_RETRIES, DEFAULT_BATCH_SIZE } from '../config/constants';
 
 enum Step {
   Config = 'config',
@@ -118,10 +119,10 @@ export default function App() {
     const transactionManager = TransactionManager.getInstance({
       accounts,
       client: publicClient,
-      queueInterval: 12000,
-      maxRetries: 2,
-      batchSize: 10, // 5 transactions per batch
-      monitorPendingTxsInterval: 12000, // 12 seconds
+      queueInterval: (ChainData[chainId]?.blockTime ?? DEFAULT_BLOCK_TIME) * 1000,
+      maxRetries: DEFAULT_MAX_RETRIES,
+      batchSize: DEFAULT_BATCH_SIZE,
+      monitorPendingTxsInterval: ChainData[chainId]?.blockTime ?? DEFAULT_BLOCK_TIME, 
       chainId,
     });
     transactionManager.initialize();
