@@ -7,6 +7,7 @@ import BigNumber from 'bignumber.js';
 import WithdrawAccountRow from './components/WithdrawAccountRow';
 import { parseEther } from 'viem';
 import { generateShortId } from '../utils/function';
+import { MIN_BALANCE_THRESHOLD } from '../config/constants';
 
 export default function WithdrawConfig({
   onPrev,
@@ -18,13 +19,12 @@ export default function WithdrawConfig({
   const { subAccounts, handleWithdraw } = useAppConfig();
 
   const subAccountsWithAmount = useMemo<SubAccountWithAmount[]>(() => {
-    const result = subAccounts.map(account => {
-      return {
+    return subAccounts
+      .filter(account => account.balanceWei > MIN_BALANCE_THRESHOLD)
+      .map(account => ({
         ...account,
         amount: BigNumber(`${parseEther(account.balance)}`).toFixed(18),
-      };
-    });
-    return result;
+      }));
   }, [subAccounts]);
 
   const onWithdraw = async () => {
