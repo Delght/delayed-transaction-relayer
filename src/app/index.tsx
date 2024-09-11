@@ -117,13 +117,13 @@ export default function App() {
       accounts,
       client: publicClient,
       queueInterval: 12000, // 12 seconds
-      maxRetries: 3,
-      batchSize: 5, // 5 transactions per batch
+      maxRetries: 2,
+      batchSize: 10, // 5 transactions per batch
       monitorPendingTxsInterval: 12000, // 12 seconds
     });
     transactionManager.initialize();
 
-    const trading = new UniswapV2(transactionManager, tokenInfo.address);
+    const trading = new UniswapV2(publicClient, transactionManager, tokenInfo.address);
 
     return trading;
   }, [subAccountsKey, tokenInfo]);

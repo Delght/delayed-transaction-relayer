@@ -1,4 +1,5 @@
 import type { PrivateKeyAccount, Abi } from 'viem';
+import { PublicClient } from 'viem';
 import { config } from '../../config/config';
 import {
   UNISWAP_V2_ROUTER_ABI,
@@ -12,13 +13,16 @@ import type {
 import { TransactionManager } from '../../modules/transaction/transaction';
 
 export class UniswapV2 {
+  private client: PublicClient;
   private transactionManager: TransactionManager;
   private tokenAddress: `0x${string}`;
 
   constructor(
+    client: PublicClient,
     transactionManager: TransactionManager,
     tokenAddress: `0x${string}`
   ) {
+    this.client = client;
     this.transactionManager = transactionManager;
     this.tokenAddress = tokenAddress;
   }
@@ -144,11 +148,11 @@ export class UniswapV2 {
     const deadline = now + BigInt(900);
 
     accounts.forEach(async (accountPair) => {
-      const balance = await this.transactionManager.client.getBalance({
+      const balance = await this.client.getBalance({
         address: accountPair.account.address,
       });
-      const price = await this.transactionManager.client.getGasPrice();
-      const gasPrice = price + BigInt(Math.floor(Number(price) * 0.1));
+      const price = await this.client.getGasPrice();
+      const gasPrice = BigInt(Math.floor(Number(price) * 1.1));
       const gasLimit = BigInt(21000);
       const gasCost = gasPrice * gasLimit;
 

@@ -13,7 +13,7 @@ export class TransactionManager {
 
   private queue: TinyQueue<QueuedTransaction>;
   private readonly accounts: Array<{ account: PrivateKeyAccount, walletClient: WalletClient}>;
-  public readonly client: PublicClient;
+  private readonly client: PublicClient;
   private readonly queueInterval: number;
   private readonly maxRetries: number;
   private readonly batchSize: number;
