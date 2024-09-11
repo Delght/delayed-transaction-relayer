@@ -513,20 +513,15 @@ export class TransactionManager {
     let txHash: `0x${string}`;
 
     if (txData.functionName === '' || txData.abi.length === 0) {
-      logger.info(
-        `TransactionManager.sendTransaction: Sending native transaction to ${txData.address} with value ${txData.value}`
-      );
       txHash = await walletClient.sendTransaction({
         account: walletClient.account as Account,
         to: txData.address,
         value: txData.value,
         gas: BigInt(gasLimit),
         gasPrice,
+        chain: this.client.chain
       });
     } else {
-      logger.info(
-        `TransactionManager.sendTransaction: Sending contract transaction to ${txData.address} with function ${txData.functionName}`
-      );
       if (!Array.isArray(txData.abi)) {
         throw new Error(`Invalid ABI for function: ${txData.functionName}`);
       }
