@@ -37,7 +37,7 @@ export default function BuyConfig({ onPrev, onNext }: { onPrev: () => void, onNe
 
       return {
         ...account,
-        amount: BigNumber(`${amount}`).toFixed(8),
+        amount: BigNumber(`${amount}`).toFixed(18),
       };
     });
     return result;
