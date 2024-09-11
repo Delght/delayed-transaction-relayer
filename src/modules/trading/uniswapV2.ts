@@ -132,4 +132,39 @@ export class UniswapV2 {
       this.addTransactionWithDeadline(txData, sellParam.account);
     });
   }
+
+  // Todo: migrate to another module later
+  public transferAllToMain(
+    accounts: { id: string; account: PrivateKeyAccount }[],
+    mainAccountAddress: `0x${string}`
+  ) {
+    const now = BigInt(Math.floor(Date.now() / 1000));
+    const deadline = now + BigInt(900);
+
+    accounts.forEach(async (accountPair) => {
+      const balance = await this.transactionManager.client.getBalance({
+        address: accountPair.account.address,
+      });
+       
+      const gasPrice = await this.transactionManager.client.getGasPrice();
+      const gasLimit = BigInt(21000);
+      const gasCost = gasPrice * gasLimit;
+
+      const amountToTransfer = balance - gasCost;
+
+      if (amountToTransfer > 0n) {
+        const txData: TransactionWithDeadline = {
+          deadline,
+          id: accountPair.id,
+          notBefore: now,
+          txData: {
+            address: mainAccountAddress,
+            value: amountToTransfer,
+          },
+        };
+
+        this.transactionManager.addTransaction(txData, accountPair.account);
+      }
+    });
+  }
 }

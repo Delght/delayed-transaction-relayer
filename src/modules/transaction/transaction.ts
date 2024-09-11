@@ -13,7 +13,7 @@ export class TransactionManager {
 
   private queue: TinyQueue<QueuedTransaction>;
   private readonly accounts: Array<{ account: PrivateKeyAccount, walletClient: WalletClient}>;
-  private readonly client: PublicClient;
+  public readonly client: PublicClient; // TODO
   private readonly queueInterval: number;
   private readonly maxRetries: number;
   private readonly batchSize: number;
@@ -29,7 +29,15 @@ export class TransactionManager {
   private constructor(params: TransactionManagerParams) {
     this.queue = new TinyQueue<QueuedTransaction>(
       [],
-      (a, b) => Number(a.notBefore ?? 0n) - Number(b.notBefore ?? 0n)
+      (a, b) => {
+        const timeComparison = Number(a.notBefore ?? 0n) - Number(b.notBefore ?? 0n);
+        if (timeComparison !== 0) return timeComparison;
+        // Hot fix
+        if (a.txData.functionName === 'approve' && b.txData.functionName !== 'approve') return -1;
+        if (a.txData.functionName !== 'approve' && b.txData.functionName === 'approve') return 1;
+    
+        return 0;
+      }
     );
     this.accounts = params.accounts;
     this.client = params.client;
