@@ -122,10 +122,11 @@ export default function App() {
       maxRetries: 2,
       batchSize: 10, // 5 transactions per batch
       monitorPendingTxsInterval: 12000, // 12 seconds
+      chainId,
     });
     transactionManager.initialize();
 
-    const trading = new UniswapV2(publicClient, transactionManager, tokenInfo.address);
+    const trading = new UniswapV2(publicClient, transactionManager, tokenInfo.address, chainId);
 
     return trading;
   }, [subAccountsKey, tokenInfo, chainId]);

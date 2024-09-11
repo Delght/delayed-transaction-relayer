@@ -1,6 +1,5 @@
 import type { PrivateKeyAccount, Abi } from 'viem';
 import { PublicClient } from 'viem';
-import { config } from '../../config/config';
 import {
   UNISWAP_V2_ROUTER_ABI,
   ERC20_ABI,
@@ -12,20 +11,24 @@ import type {
   TransactionWithDeadline,
 } from '../../types/types';
 import { TransactionManager } from '../../modules/transaction/transaction';
+import { ChainData, ChainId } from '../../config/chains';
 
 export class UniswapV2 {
   private client: PublicClient;
   private transactionManager: TransactionManager;
   private tokenAddress: `0x${string}`;
+  private chainId: ChainId
 
   constructor(
     client: PublicClient,
     transactionManager: TransactionManager,
-    tokenAddress: `0x${string}`
+    tokenAddress: `0x${string}`,
+    chainId: ChainId
   ) {
     this.client = client;
     this.transactionManager = transactionManager;
     this.tokenAddress = tokenAddress;
+    this.chainId = chainId;
   }
 
   private createUniswapTxData(
@@ -34,7 +37,7 @@ export class UniswapV2 {
     value?: bigint
   ): TransactionData {
     return {
-      address: config.UNISWAP_V2_ROUTER_ADDRESS,
+      address: ChainData[this.chainId].uniswapRouterV2,
       abi: UNISWAP_V2_ROUTER_ABI as Abi,
       functionName,
       args,
@@ -68,7 +71,7 @@ export class UniswapV2 {
     accounts.forEach(accountPair => {
       const txData: TransactionWithDeadline = {
         txData: this.createERC20TxData('approve', [
-          config.UNISWAP_V2_ROUTER_ADDRESS,
+          ChainData[this.chainId].uniswapRouterV2,
           MAX_UINT256,
         ]),
         deadline,
@@ -94,7 +97,7 @@ export class UniswapV2 {
           'swapExactETHForTokens',
           [
             minTokensOut,
-            [config.WETH_ADDRESS, this.tokenAddress],
+            [ChainData[this.chainId].wethAddress, this.tokenAddress],
             buyParam.account.address,
             deadline,
           ],
@@ -127,7 +130,7 @@ export class UniswapV2 {
           [
             sellParam.amountToSell,
             minEthOut,
-            [this.tokenAddress, config.WETH_ADDRESS],
+            [this.tokenAddress, ChainData[this.chainId].wethAddress],
             sellParam.account.address,
             deadline,
           ]

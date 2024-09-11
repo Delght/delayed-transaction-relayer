@@ -1,5 +1,6 @@
 import type { Abi, PrivateKeyAccount, PublicClient, WalletClient } from 'viem';
 import { TransactionDataCalculator } from '../modules/transaction/calculator';
+import { ChainId } from '../config/chains';
 
 export interface TransactionData {
   address: `0x${string}`,
@@ -17,6 +18,7 @@ export interface TransactionWithDeadline {
 }
 
 export interface TransactionManagerParams {
+  chainId: ChainId
   accounts: Array<{ account: PrivateKeyAccount, walletClient: WalletClient }>; 
   client: PublicClient; 
   queueInterval?: number;

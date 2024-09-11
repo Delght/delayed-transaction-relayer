@@ -2,12 +2,12 @@ import TinyQueue from "tinyqueue";
 import { Mutex } from "async-mutex";
 import { encodeFunctionData } from "viem";
 import { logger } from "../../utils/logger";
-import { config } from "../../config/config";
 import { GAS_PRICE_MULTIPLIER, GAS_LIMIT_MULTIPLIER, GAS_TRANSFER_LIMIT } from "../../config/constants";
 import { TransactionDataCalculator } from "./calculator";
 import type { Account, PrivateKeyAccount, PublicClient, WalletClient } from "viem";
 import type { TransactionData, TransactionWithDeadline, QueuedTransaction, TrackedTransaction, TransactionManagerParams } from "../../types/types";
 import Observer from "../../utils/observer";
+import { ChainData, ChainId } from "../../config/chains";
 
 export class TransactionManager {
   private static instance: TransactionManager | null = null;
@@ -26,11 +26,13 @@ export class TransactionManager {
   private readonly removalSetMutex: Mutex;
   private readonly delayedQueue: QueuedTransaction[];
   private readonly calculator: TransactionDataCalculator;
+  private readonly chainId: ChainId
 
   private constructor(params: TransactionManagerParams) {
     this.queue = new TinyQueue<QueuedTransaction>([], this.compareTransactions);
     this.accounts = params.accounts;
     this.client = params.client;
+    this.chainId = params.chainId;
     this.queueInterval = params.queueInterval || 1000;
     this.maxRetries = params.maxRetries || 3;
     this.queueMutex = new Mutex();
@@ -41,7 +43,11 @@ export class TransactionManager {
     this.removalSetMutex = new Mutex();
     this.monitorPendingTxsInterval = params.monitorPendingTxsInterval || 1000;
     this.delayedQueue = [];
-    this.calculator = params.calculator || new TransactionDataCalculator(this.client, config.UNISWAP_V2_ROUTER_ADDRESS);
+    const chainData = ChainData[this.chainId];
+    if (!chainData) {
+      throw new Error(`Chain data not found for chain ID: ${this.chainId}`);
+    }
+    this.calculator = params.calculator || new TransactionDataCalculator(this.client, chainData.uniswapRouterV2);
   }
 
   // Public method to get the instance of the TransactionManager

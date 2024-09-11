@@ -8,7 +8,7 @@ import BigNumber from 'bignumber.js';
 import { generateShortId } from '../utils/function';
 import { erc20Abi, getContract, parseUnits } from 'viem';
 import { getPublicClient } from '../client';
-import { config } from '../config/config';
+import { ChainData } from '../config/chains';
 
 export default function SellConfig({
   onPrev,
@@ -68,7 +68,7 @@ export default function SellConfig({
       sellParams.map(async sellParam => {
         const allowance = await erc20Contract.read.allowance([
           sellParam.address,
-          config.UNISWAP_V2_ROUTER_ADDRESS,
+          ChainData[chainId].uniswapRouterV2,
         ]);
         return {
           address: sellParam.address,
@@ -76,7 +76,7 @@ export default function SellConfig({
         };
       })
     );
-    console.log({allowances, sellParams});
+
     const approveParams: ApproveParam[] = [];
     sellParams.forEach(sellParam => {
       const allowance = allowances.find(

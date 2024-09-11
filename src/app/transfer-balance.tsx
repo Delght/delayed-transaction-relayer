@@ -8,10 +8,10 @@ import Loading from './components/Loading';
 import { useCallback, useMemo, useState } from 'react';
 import { encodeFunctionData, parseEther } from 'viem';
 import { sendTransaction } from '../utils/transaction';
-import { config } from '../config/config';
 import { DisperseAbi } from '../config/disperse';
 import toast from 'react-hot-toast';
 import BigNumber from 'bignumber.js';
+import { ChainData } from '../config/chains';
 
 export default function TransferBalance({
   onNext,
@@ -83,7 +83,7 @@ export default function TransferBalance({
 
       await sendTransaction({
         privateKey: mainAccount.privateKey,
-        to: config.DISPERSE_ADDRESS,
+        to: ChainData[chainId].disperseAddress,
         data: encodeFunctionData({
           abi: DisperseAbi,
           functionName: 'disperseEther',
