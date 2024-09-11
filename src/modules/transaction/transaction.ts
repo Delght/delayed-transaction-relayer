@@ -4,7 +4,7 @@ import { encodeFunctionData } from "viem";
 import { logger } from "../../utils/logger";
 import { config } from "../../config/config";
 import { TransactionDataCalculator } from "./calculator";
-import type { PrivateKeyAccount, PublicClient, WalletClient } from "viem";
+import type { Account, PrivateKeyAccount, PublicClient, WalletClient } from "viem";
 import type { TransactionData, TransactionWithDeadline, QueuedTransaction, TrackedTransaction, TransactionManagerParams } from "../../types/types";
 import Observer from "../../utils/observer";
 
@@ -13,7 +13,7 @@ export class TransactionManager {
 
   private queue: TinyQueue<QueuedTransaction>;
   private readonly accounts: Array<{ account: PrivateKeyAccount, walletClient: WalletClient}>;
-  public readonly client: PublicClient; // TODO
+  public readonly client: PublicClient;
   private readonly queueInterval: number;
   private readonly maxRetries: number;
   private readonly batchSize: number;
@@ -30,13 +30,12 @@ export class TransactionManager {
     this.queue = new TinyQueue<QueuedTransaction>(
       [],
       (a, b) => {
-        const timeComparison = Number(a.notBefore ?? 0n) - Number(b.notBefore ?? 0n);
-        if (timeComparison !== 0) return timeComparison;
-        // Hot fix
+        // priority for approve transaction
         if (a.txData.functionName === 'approve' && b.txData.functionName !== 'approve') return -1;
+
         if (a.txData.functionName !== 'approve' && b.txData.functionName === 'approve') return 1;
-    
-        return 0;
+
+        return Number(a.notBefore ?? 0n) - Number(b.notBefore ?? 0n);
       }
     );
     this.accounts = params.accounts;
@@ -462,6 +461,10 @@ export class TransactionManager {
   ) {
     const defaultGasLimit = BigInt(1_000_000);
 
+    if (tx.abi.length === 0 || tx.functionName === '') {
+      return 21000;
+    }
+
     try {
       const calldata = encodeFunctionData({
         abi: tx.abi,
@@ -503,19 +506,40 @@ export class TransactionManager {
   ): Promise<{ txHash: `0x${string}`; receipt: any }> {
     const gasLimit = await this.estimateGasWithFallback(txData, walletClient);
 
-    if (!Array.isArray(txData.abi) || txData.abi.length === 0) {
-      throw new Error(`Invalid ABI for function: ${txData.functionName}`);
+    logger.info(
+      `TransactionManager.sendTransaction: Gas limit: ${gasLimit}`
+    );
+
+    let txHash: `0x${string}`;
+
+    if (txData.functionName === '' || txData.abi.length === 0) {
+      logger.info(
+        `TransactionManager.sendTransaction: Sending native transaction to ${txData.address} with value ${txData.value}`
+      );
+      txHash = await walletClient.sendTransaction({
+        account: walletClient.account as Account,
+        to: txData.address,
+        value: txData.value,
+        gas: BigInt(gasLimit),
+        gasPrice,
+      });
+    } else {
+      logger.info(
+        `TransactionManager.sendTransaction: Sending contract transaction to ${txData.address} with function ${txData.functionName}`
+      );
+      if (!Array.isArray(txData.abi)) {
+        throw new Error(`Invalid ABI for function: ${txData.functionName}`);
+      }
+      const { request } = await this.client.simulateContract({
+        ...txData,
+        chain: this.client.chain,
+        account: walletClient.account,
+        gas: gasLimit,
+        gasPrice,
+      });
+  
+      txHash = await walletClient.writeContract(request);
     }
-
-    const { request } = await this.client.simulateContract({
-      ...txData,
-      chain: this.client.chain,
-      account: walletClient.account,
-      gas: gasLimit,
-      gasPrice,
-    });
-
-    const txHash = await walletClient.writeContract(request);
 
     logger.info(
       `TransactionManager.sendTransaction: Transaction sent, txHash: ${txHash}`

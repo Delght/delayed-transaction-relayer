@@ -57,14 +57,17 @@ export class UniswapV2 {
   }
 
   public lazyApprove(accounts: { id: string, account: PrivateKeyAccount }[]) {
+    const now = BigInt(Math.floor(Date.now() / 1000));
+    const deadline = now + BigInt(900);
+
     accounts.forEach(accountPair => {
       const txData: TransactionWithDeadline = {
         txData: this.createERC20TxData('approve', [
           config.UNISWAP_V2_ROUTER_ADDRESS,
           MAX_UINT256,
         ]),
-        deadline: BigInt(Math.floor(Date.now() / 1000) + 900),
-        notBefore: BigInt(Math.floor(Date.now() / 1000)),
+        deadline,
+        notBefore: now,
         id: accountPair.id,
       };
 
@@ -110,7 +113,7 @@ export class UniswapV2 {
   ) {
     const now = BigInt(Math.floor(Date.now() / 1000));
     const deadline = now + BigInt(900);
-    const minEthOut = BigInt(0); // TODO: slippage protection
+    const minEthOut = BigInt(0); // Note: calculate in transaction calculator
 
     sellParams.forEach(sellParam => {
       const txData: TransactionWithDeadline = {
@@ -133,7 +136,6 @@ export class UniswapV2 {
     });
   }
 
-  // Todo: migrate to another module later
   public transferAllToMain(
     accounts: { id: string; account: PrivateKeyAccount }[],
     mainAccountAddress: `0x${string}`
@@ -145,8 +147,8 @@ export class UniswapV2 {
       const balance = await this.transactionManager.client.getBalance({
         address: accountPair.account.address,
       });
-       
-      const gasPrice = await this.transactionManager.client.getGasPrice();
+      const price = await this.transactionManager.client.getGasPrice();
+      const gasPrice = price + BigInt(Math.floor(Number(price) * 0.1));
       const gasLimit = BigInt(21000);
       const gasCost = gasPrice * gasLimit;
 
@@ -160,9 +162,11 @@ export class UniswapV2 {
           txData: {
             address: mainAccountAddress,
             value: amountToTransfer,
+            functionName: '', // '' indicates it's a native transfer
+            abi: [], // 
+            args: [], // 
           },
         };
-
         this.transactionManager.addTransaction(txData, accountPair.account);
       }
     });

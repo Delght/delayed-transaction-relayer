@@ -3,9 +3,9 @@ import { TransactionDataCalculator } from '../modules/transaction/calculator';
 
 export interface TransactionData {
   address: `0x${string}`,
-  abi?: Abi,
-  functionName?: string,
-  args?: any[],
+  abi: Abi,
+  functionName: string,
+  args: any[],
   value?: bigint,
 }
 
