@@ -17,7 +17,7 @@ export default function SellMonitorRow({
 }: {
   sellParam: SellOrApproveMonitor;
 }) {
-  const { tokenInfo } = useAppConfig();
+  const { tokenInfo, chainId } = useAppConfig();
   const {
     data: dataBalance,
     isLoading: loadingBalance,
@@ -87,7 +87,7 @@ export default function SellMonitorRow({
         )}
         onClick={() => {
           if (status.startsWith('0x')) {
-            viewTransaction(status);
+            viewTransaction(status, chainId);
           }
         }}
       >

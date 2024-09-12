@@ -1,4 +1,6 @@
-import { parseEther } from 'viem';
+import { parseEther, parseGwei } from 'viem';
+
+export const MAX_PRIORITY_FEE_PER_GAS = parseGwei('0.001');
 
 export const DEFAULT_BLOCK_TIME = 12;
 
@@ -6,7 +8,7 @@ export const DEFAULT_MAX_RETRIES = 2;
 
 export const DEFAULT_BATCH_SIZE = 5;
 
-export const MIN_BALANCE_THRESHOLD = parseEther('0.001'); 
+export const MIN_BALANCE_THRESHOLD = parseEther('0.0001'); 
 
 export const SLIPPAGE_TOLERANCE_BASIS_POINTS = 700;
 

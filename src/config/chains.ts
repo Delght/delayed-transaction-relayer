@@ -33,7 +33,7 @@ export const ChainData: Record<
   8453: {
     chainId: 8453,
     chainName: 'Base',
-    rpcUrl: 'https://base.blockpi.network/v1/rpc/public	',
+    rpcUrl: 'https://base-rpc.publicnode.com',
     nativeSymbol: 'ETH',
     viemChain: base,
     explorer: 'https://basescan.org',

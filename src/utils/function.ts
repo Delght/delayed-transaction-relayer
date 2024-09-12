@@ -1,3 +1,6 @@
+import { ChainData, ChainId } from '../config/chains';
+
+
 export const isPrivateKey = (privateKey: string) => {
   const reg = /^(0x)?[a-fA-F0-9]{64}$/;
   return reg.test(privateKey);
@@ -123,10 +126,10 @@ export const generateShortId = (length: number = 10) => {
   return result;
 };
 
-export const viewTransaction = (hash: string, chainId?: number) => {
-  if (chainId === 1) {
-    window.open(`https://etherscan.io/tx/${hash}`, '_blank');
-  } else {
-    window.open(`https://sepolia.etherscan.io/tx/${hash}`, '_blank');
+export const viewTransaction = (hash: string, chainId?: ChainId) => {
+  if (!chainId) {
+    return;
   }
+
+  window.open(`${ChainData[chainId].explorer}/tx/${hash}`, '_blank');
 };

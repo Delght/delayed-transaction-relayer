@@ -2,7 +2,7 @@ import TinyQueue from "tinyqueue";
 import { Mutex } from "async-mutex";
 import { encodeFunctionData } from "viem";
 import { logger } from "../../utils/logger";
-import { GAS_PRICE_MULTIPLIER, GAS_LIMIT_MULTIPLIER, GAS_TRANSFER_LIMIT } from "../../config/constants";
+import { GAS_PRICE_MULTIPLIER, GAS_LIMIT_MULTIPLIER, GAS_TRANSFER_LIMIT, MAX_PRIORITY_FEE_PER_GAS } from "../../config/constants";
 import { TransactionDataCalculator } from "./calculator";
 import type { Account, PrivateKeyAccount, PublicClient, WalletClient } from "viem";
 import type { TransactionData, TransactionWithDeadline, QueuedTransaction, TrackedTransaction, TransactionManagerParams } from "../../types/types";
@@ -204,9 +204,11 @@ export class TransactionManager {
       `TransactionManager.submitTransaction: Submitting transaction: ${txData.functionName}`
     );
 
-    const currentGasPrice = await this.client.getGasPrice();
-    const gasPrice = BigInt(Math.floor(Number(currentGasPrice) * GAS_PRICE_MULTIPLIER));
-    const { txHash, receipt } = await this.sendTransaction(txData, walletClient, gasPrice);
+    const { maxFeePerGas } = await this.client.estimateFeesPerGas()
+
+    const gasPrice = BigInt(Math.floor(Number(maxFeePerGas) * GAS_PRICE_MULTIPLIER));
+
+    const { txHash, receipt } = await this.sendTransaction(txData, walletClient, maxFeePerGas);
 
     const nonce = await walletClient.account?.nonceManager?.get({
       address: walletClient.account?.address,
@@ -365,11 +367,14 @@ export class TransactionManager {
         `TransactionManager.speedUpTransaction: Speeding up transaction with hash: ${txHash} by increasing gas price`
       );
 
+      const { maxFeePerGas } = await this.client.estimateFeesPerGas();
+
       const originalGasPrice = trackedTx.gasPrice
         ? trackedTx.gasPrice
-        : await this.client.getGasPrice();
-      const newGasPrice =
-        originalGasPrice + BigInt(Math.floor(Number(originalGasPrice) * 0.1)); // Increase by 10%
+        : maxFeePerGas;
+        
+      const newGasPrice = BigInt(Math.floor(Number(originalGasPrice) * GAS_PRICE_MULTIPLIER));
+        
 
       await this.queueMutex.runExclusive(() => {
         this.queue.push({
@@ -452,7 +457,7 @@ export class TransactionManager {
   private async sendTransaction(
     txData: TransactionData,
     walletClient: WalletClient,
-    gasPrice: bigint
+    maxFeePerGas: bigint
   ): Promise<{ txHash: `0x${string}`; receipt: any }> {
     const gasLimit = await this.estimateGasWithFallback(txData, walletClient);
     let txHash: `0x${string}`;
@@ -463,7 +468,8 @@ export class TransactionManager {
         to: txData.address,
         value: txData.value,
         gas: gasLimit,
-        gasPrice,
+        maxFeePerGas,
+        maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
         chain: this.client.chain
       });
     } else {
@@ -475,7 +481,8 @@ export class TransactionManager {
         chain: this.client.chain,
         account: walletClient.account,
         gas: gasLimit,
-        gasPrice,
+        maxFeePerGas,
+        maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
       });
   
       txHash = await walletClient.writeContract(request);

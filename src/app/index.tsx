@@ -47,14 +47,13 @@ export default function App() {
   const [step, setStep] = useState<Step>(Step.Config);
   const [chainId, setChainId] = useState<ChainId>(ChainsSupported[0].chainId);
   const [mainAccount, setMainAccount] = useState<AddressKeyPair>({
-    address: '0xA2ff93e1488849FD443c457D4C569B68F7C80f1d',
-    privateKey:
-      '0xc0a05efd3d57122a429b1211647964d502a7b332b42659a922d8fff2809215fd',
+    address: '0x',
+    privateKey: '0x',
   });
 
   const [tokenInfo, setTokenInfo] = useState<TokenInfo>({
-    address: '0xf7De756eA5976Da3700A5b400E5b59d25BbC934c',
-    symbol: 'TEST',
+    address: '0x',
+    symbol: '',
     decimals: 18,
   });
 

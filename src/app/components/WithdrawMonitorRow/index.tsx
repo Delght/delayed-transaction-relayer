@@ -5,6 +5,7 @@ import {
   viewTransaction,
 } from '../../../utils/function';
 import useBalance from '../../hooks/useBalance';
+import useAppConfig from '../../hooks/useAppConfig';
 import Loading from '../Loading';
 import { useEffect, useState } from 'react';
 import Observer from '../../../utils/observer';
@@ -17,6 +18,11 @@ export default function WithdrawMonitorRow({
   withdrawParam: WithdrawParam;
   refetchMainAccount: any
 }) {
+
+  const { chainId } = useAppConfig();
+
+  console.log('chainId', chainId);
+
   const {
     data: dataBalance,
     isLoading: loadingBalance,
@@ -69,7 +75,7 @@ export default function WithdrawMonitorRow({
         )}
         onClick={() => {
           if (status.startsWith('0x')) {
-            viewTransaction(status);
+            viewTransaction(status, chainId);
           }
         }}
       >

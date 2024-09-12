@@ -13,7 +13,8 @@ import { useEffect, useState } from 'react';
 import Observer from '../../../utils/observer';
 
 export default function BuyMonitorRow({ buyParam }: { buyParam: BuyParam }) {
-  const { tokenInfo } = useAppConfig();
+  const { tokenInfo, chainId } = useAppConfig();
+  
   const {
     data: dataBalance,
     isLoading: loadingBalance,
@@ -21,6 +22,7 @@ export default function BuyMonitorRow({ buyParam }: { buyParam: BuyParam }) {
   } = useBalance(buyParam.address);
 
   const [status, setStatus] = useState('waiting');
+
 
   useEffect(() => {
     const listener = (data: string) => {
@@ -76,7 +78,8 @@ export default function BuyMonitorRow({ buyParam }: { buyParam: BuyParam }) {
         )}
         onClick={() => {
           if (status.startsWith('0x')) {
-            viewTransaction(status);
+            console.log(viewTransaction(status, chainId));
+            viewTransaction(status, chainId);
           }
         }}
       >
