@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
-import Button from './components/Button';
-import Input from './components/Input';
+import { isAddress, erc20Abi, getContract } from 'viem';
+import { privateKeyToAddress } from 'viem/accounts';
+
+import { getPublicClient } from '../client';
+import { ChainId, ChainsSupported } from '../config/chains';
 import { isPrivateKey } from '../utils/function';
 import { AddressKeyPair } from '../utils/generate';
-import { privateKeyToAddress } from 'viem/accounts';
-import { isAddress, erc20Abi, getContract } from 'viem';
-import useAppConfig from './hooks/useAppConfig';
+
+import Button from './components/Button';
+import Input from './components/Input';
 import Select from './components/Select';
-import { ChainId, ChainsSupported } from '../config/chains';
-import { getPublicClient } from '../client';
+import useAppConfig from './hooks/useAppConfig';
 
 export default function Config({
   onNext,

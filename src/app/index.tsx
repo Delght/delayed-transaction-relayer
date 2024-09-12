@@ -1,8 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Config from './config';
-import ImportSubAccounts from './import-sub-accounts';
+import { erc20Abi, formatEther, formatUnits, getContract } from 'viem';
+import { privateKeyToAccount, nonceManager } from 'viem/accounts';
+
+import { getPublicClient, getWalletClient } from '../client';
+import { ChainId, ChainsSupported, ChainData } from '../config/chains';
+import { DEFAULT_BLOCK_TIME, DEFAULT_MAX_RETRIES, DEFAULT_BATCH_SIZE } from '../config/constants';
+import { TransactionManager } from '../modules/transaction/transaction';
+import { UniswapV2 } from '../modules/trading/uniswapV2';
 import { AddressKeyPair } from '../utils/generate';
+
+import { AppContext } from './context';
+import Config from './config';
+import ChooseMethod from './choose-method';
+import BuyConfig from './buy-config';
+import BuyMonitor from './buy-monitor';
+import ImportSubAccounts from './import-sub-accounts';
+import SellConfig from './sell-config';
+import SellMonitor from './sell-monitor';
 import TransferBalance from './transfer-balance';
+import WithdrawConfig from './withdraw-config';
+import WithdrawMonitor from './withdraw-monitor';
+import Loading from './components/Loading';
 import {
   ApproveParam,
   BuyParam,
@@ -12,22 +30,6 @@ import {
   TokenInfo,
   WithdrawParam,
 } from './type';
-import { AppContext } from './context';
-import ChooseMethod from './choose-method';
-import BuyConfig from './buy-config';
-import SellConfig from './sell-config';
-import { getPublicClient, getWalletClient } from '../client';
-import { erc20Abi, formatEther, formatUnits, getContract } from 'viem';
-import Loading from './components/Loading';
-import { TransactionManager } from '../modules/transaction/transaction';
-import { privateKeyToAccount, nonceManager } from 'viem/accounts';
-import { UniswapV2 } from '../modules/trading/uniswapV2';
-import BuyMonitor from './buy-monitor';
-import SellMonitor from './sell-monitor';
-import WithdrawConfig from './withdraw-config';
-import WithdrawMonitor from './withdraw-monitor';
-import { ChainId, ChainsSupported, ChainData } from '../config/chains';
-import { DEFAULT_BLOCK_TIME, DEFAULT_MAX_RETRIES, DEFAULT_BATCH_SIZE } from '../config/constants';
 
 enum Step {
   Config = 'config',
@@ -124,8 +126,7 @@ export default function App() {
       monitorPendingTxsInterval: ChainData[chainId]?.blockTime ?? DEFAULT_BLOCK_TIME, 
       chainId,
     });
-    transactionManager.initialize();
-
+    
     const trading = new UniswapV2(publicClient, transactionManager, tokenInfo.address, chainId);
 
     return trading;

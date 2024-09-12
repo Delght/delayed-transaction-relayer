@@ -1,14 +1,27 @@
+// Third-party imports
 import TinyQueue from "tinyqueue";
 import { Mutex } from "async-mutex";
 import { encodeFunctionData } from "viem";
-import { logger } from "../../utils/logger";
-import { GAS_PRICE_MULTIPLIER, GAS_LIMIT_MULTIPLIER, GAS_TRANSFER_LIMIT, MAX_PRIORITY_FEE_PER_GAS } from "../../config/constants";
-import { TransactionDataCalculator } from "./calculator";
 import type { Account, PrivateKeyAccount, PublicClient, WalletClient } from "viem";
-import type { TransactionData, TransactionWithDeadline, QueuedTransaction, TrackedTransaction, TransactionManagerParams } from "../../types/types";
-import Observer from "../../utils/observer";
-import { ChainData, ChainId } from "../../config/chains";
 
+// Local imports
+import Observer from "../../utils/observer";
+import { logger } from "../../utils/logger";
+import { ChainData, ChainId } from "../../config/chains";
+import {
+  GAS_PRICE_MULTIPLIER,
+  GAS_LIMIT_MULTIPLIER,
+  GAS_TRANSFER_LIMIT,
+  MAX_PRIORITY_FEE_PER_GAS
+} from "../../config/constants";
+import { TransactionDataCalculator } from "./calculator";
+import type {
+  TransactionData,
+  TransactionWithDeadline,
+  QueuedTransaction,
+  TrackedTransaction,
+  TransactionManagerParams
+} from "../../types/types";
 export class TransactionManager {
   private static instance: TransactionManager | null = null;
 
@@ -50,18 +63,15 @@ export class TransactionManager {
     this.calculator = params.calculator || new TransactionDataCalculator(this.client, chainData.uniswapRouterV2);
   }
 
-  // Public method to get the instance of the TransactionManager
   public static getInstance(params: TransactionManagerParams): TransactionManager {
     if (this.instance === null) {
-      this.instance = new TransactionManager(params);  // Create instance if not already created
+      this.instance = new TransactionManager(params);
+      this.instance.initialize();
     }
-    return this.instance;  // Return the single instance
+    return this.instance;
   }
-
-  /**
-   * Initializes the TransactionManager by starting the processQueue and monitorPendingTxs methods.
-   */
-  public async initialize() {
+  
+  private async initialize() {
     logger.info("TransactionManager: initialized");
 
     this.processQueue();
@@ -575,9 +585,9 @@ export class TransactionManager {
       this.calculator.calculateMinAmountWithSlippage(currentAmountOut);
     queuedTransaction.txData.args[minAmountIndex] = newMinAmount;
 
-    logger.info(
-      `Transaction recalculated for function: ${queuedTransaction.txData.functionName}, new min amount: ${newMinAmount}`
-    );
+    // logger.info(
+    //   `Transaction recalculated for function: ${queuedTransaction.txData.functionName}, new min amount: ${newMinAmount}`
+    // );
 
     return queuedTransaction.txData;
   }

@@ -1,14 +1,12 @@
-import {
-  getContentFile,
-  parseJSON,
-  renderTokenAmount,
-} from '../utils/function';
-import Button from './components/Button';
+import { useState } from 'react';
+
+import { getContentFile, parseJSON, renderTokenAmount } from '../utils/function';
 import { AddressKeyPair, generateAddressesAndKeys } from '../utils/generate';
+
+import Button from './components/Button';
+import Loading from './components/Loading';
 import useAppConfig from './hooks/useAppConfig';
 import useBalance from './hooks/useBalance';
-import Loading from './components/Loading';
-import { useState } from 'react';
 
 export default function ImportSubAccounts({
   onNext,
@@ -64,7 +62,7 @@ export default function ImportSubAccounts({
   };
 
   return (
-    <div className="w-full flex flex-col justify-center items-center">
+    <div className="flex flex-col items-center justify-center w-full">
       <h1 className="text-2xl font-bold text-center text-[rgb(252,114,255)]">
         Nhập danh sách ví phụ  
       </h1>
@@ -80,7 +78,7 @@ export default function ImportSubAccounts({
         )}{' '}
         ETH
       </div>
-      <div className="text-base flex items-center">
+      <div className="flex items-center text-base">
         Số dư {tokenInfo.symbol}:{' '}
         {!loadingMainAccountBalance ? (
           renderTokenAmount(mainAccountBalance.balanceToken)

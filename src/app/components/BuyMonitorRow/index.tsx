@@ -78,7 +78,6 @@ export default function BuyMonitorRow({ buyParam }: { buyParam: BuyParam }) {
         )}
         onClick={() => {
           if (status.startsWith('0x')) {
-            console.log(viewTransaction(status, chainId));
             viewTransaction(status, chainId);
           }
         }}

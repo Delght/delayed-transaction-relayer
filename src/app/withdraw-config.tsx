@@ -1,13 +1,15 @@
-import classNames from 'classnames';
-import Button from './components/Button';
-import useAppConfig from './hooks/useAppConfig';
 import { useMemo } from 'react';
-import { SubAccountWithAmount, WithdrawParam } from './type';
+import classNames from 'classnames';
 import BigNumber from 'bignumber.js';
-import WithdrawAccountRow from './components/WithdrawAccountRow';
 import { parseEther } from 'viem';
-import { generateShortId } from '../utils/function';
+
 import { MIN_BALANCE_THRESHOLD } from '../config/constants';
+import { generateShortId } from '../utils/function';
+
+import Button from './components/Button';
+import WithdrawAccountRow from './components/WithdrawAccountRow';
+import useAppConfig from './hooks/useAppConfig';
+import { SubAccountWithAmount, WithdrawParam } from './type';
 
 export default function WithdrawConfig({
   onPrev,

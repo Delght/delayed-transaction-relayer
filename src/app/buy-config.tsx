@@ -1,14 +1,16 @@
-import classNames from 'classnames';
-import Button from './components/Button';
-import useAppConfig from './hooks/useAppConfig';
-import BuyAccountRow from './components/BuyAccountRow';
-import Input from './components/Input';
 import { useEffect, useMemo, useState } from 'react';
-import { generateShortId, randomNumber } from '../utils/function';
-import { BuyParam, SubAccountWithAmount } from './type';
+import classNames from 'classnames';
 import BigNumber from 'bignumber.js';
 import { parseEther } from 'viem';
+
 import { MIN_BALANCE_THRESHOLD } from '../config/constants';
+import { generateShortId, randomNumber } from '../utils/function';
+
+import Button from './components/Button';
+import BuyAccountRow from './components/BuyAccountRow';
+import Input from './components/Input';
+import useAppConfig from './hooks/useAppConfig';
+import { BuyParam, SubAccountWithAmount } from './type';
 
 const minDefault = 0.005;
 const maxDefault = 0.01;

@@ -21,8 +21,6 @@ export default function WithdrawMonitorRow({
 
   const { chainId } = useAppConfig();
 
-  console.log('chainId', chainId);
-
   const {
     data: dataBalance,
     isLoading: loadingBalance,

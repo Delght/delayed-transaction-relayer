@@ -1,14 +1,16 @@
-import classNames from 'classnames';
-import Button from './components/Button';
-import useAppConfig from './hooks/useAppConfig';
 import { useMemo, useState } from 'react';
-import { ApproveParam, SellOrApproveMonitor, SubAccountWithAmount } from './type';
-import SellAccountRow from './components/SellAccountRow';
+import classNames from 'classnames';
 import BigNumber from 'bignumber.js';
-import { generateShortId } from '../utils/function';
 import { erc20Abi, getContract, parseUnits } from 'viem';
+
 import { getPublicClient } from '../client';
 import { ChainData } from '../config/chains';
+import { generateShortId } from '../utils/function';
+
+import Button from './components/Button';
+import SellAccountRow from './components/SellAccountRow';
+import useAppConfig from './hooks/useAppConfig';
+import { ApproveParam, SellOrApproveMonitor, SubAccountWithAmount } from './type';
 
 export default function SellConfig({
   onPrev,
