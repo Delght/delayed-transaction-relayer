@@ -137,7 +137,7 @@ export class UniswapV2 {
         ),
         id: sellParam.id,
         deadline,
-        notBefore: now,
+        notBefore: now + BigInt(ChainData[this.chainId]?.blockTime ?? 12) * 2n, // delay by 2 blocks
       };
 
       this.addTransactionWithDeadline(txData, sellParam.account);

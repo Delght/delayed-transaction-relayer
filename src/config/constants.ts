@@ -4,7 +4,7 @@ export const DEFAULT_BLOCK_TIME = 12;
 
 export const DEFAULT_MAX_RETRIES = 2;
 
-export const DEFAULT_BATCH_SIZE = 10;
+export const DEFAULT_BATCH_SIZE = 5;
 
 export const MIN_BALANCE_THRESHOLD = parseEther('0.001'); 
 
