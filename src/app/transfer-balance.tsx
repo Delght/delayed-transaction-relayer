@@ -5,6 +5,7 @@ import TransferAccountRow from './components/TransferAccountRow';
 import Button from './components/Button';
 import useAppConfig from './hooks/useAppConfig';
 import Loading from './components/Loading';
+import Input from './components/Input';
 import { useCallback, useMemo, useState } from 'react';
 import { encodeFunctionData, parseEther } from 'viem';
 import { sendTransaction } from '../utils/transaction';
@@ -12,6 +13,7 @@ import { DisperseAbi } from '../config/disperse';
 import toast from 'react-hot-toast';
 import BigNumber from 'bignumber.js';
 import { ChainData } from '../config/chains';
+
 
 export default function TransferBalance({
   onNext,
@@ -24,6 +26,17 @@ export default function TransferBalance({
   const { data: mainAccountBalance, isLoading: loadingMainAccountBalance } =
     useBalance(mainAccount.address);
 
+  const [uniformValue, setUniformValue] = useState('');
+
+  const handleUniformValueChange = (value: string) => {
+    setUniformValue(value);
+    const newTransfers = subAccounts.reduce((acc, account) => {
+      acc[account.address] = { native: value };
+      return acc;
+    }, {} as { [key: string]: { native: string } });
+    setSubAccountTransfers(newTransfers);
+  };
+  
   const [subAccountTransfers, setSubAccountTransfers] = useState<{
     [key: string]: {
       native: string;
@@ -33,7 +46,7 @@ export default function TransferBalance({
 
   const [loading, setLoading] = useState(false);
 
-  console.log(subAccountTransfers);
+  // console.log(subAccountTransfers);
 
   const formatData = useMemo(() => {
     let totalNative = 0;
@@ -110,7 +123,7 @@ export default function TransferBalance({
   }, [formatData, mainAccount, reloadBalance, chainId]);
 
   return (
-    <div className="w-full flex flex-col justify-center items-center">
+    <div className="flex flex-col items-center justify-center w-full">
       <h1 className="text-2xl font-bold text-center text-[rgb(252,114,255)]">
         Chuyển ETH sang ví phụ
       </h1>
@@ -126,7 +139,7 @@ export default function TransferBalance({
         )}{' '}
         ETH
       </div>
-      <div className="text-base flex items-center">
+      <div className="flex items-center text-base">
         Số dư {tokenInfo.symbol}:{' '}
         {!loadingMainAccountBalance ? (
           renderTokenAmount(mainAccountBalance.balanceToken)
@@ -142,6 +155,13 @@ export default function TransferBalance({
         }}
       >
         Quay lại bước trước đó
+      </div>
+      <div className="mt-[20px] w-full flex justify-center">
+        <Input
+          value={uniformValue}
+          onChange={e => handleUniformValueChange(e.target.value)}
+          placeholder="Nhập giá trị ETH sẽ chuyển cho tất cả tài khoản"
+        />
       </div>
       <div className="mt-[20px] flex flex-col w-full max-w-[Min(1200px,90vw)] border-2">
         <div className={classNames('flex items-center')}>
