@@ -64,3 +64,6 @@ export type SubAccountWithPercentageAndAmount = SubAccount & {
 };
 
 
+export type SubAccountWithAmount = SubAccount & {
+  amount: string;
+}
