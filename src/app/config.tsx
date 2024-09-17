@@ -122,7 +122,6 @@ export default function Config({
           title='Token Symbol:'
           value={isLoading ? 'Loading...' : tokenSymbol}
           onChange={e => setTokenSymbol(e.target.value)}
-          placeholder="Nhập token symbol"
           disabled={true}
         />
       </div>
@@ -131,7 +130,6 @@ export default function Config({
           title='Token Decimals:'
           value={isLoading ? 'Loading...' : tokenDecimals}
           onChange={e => setTokenDecimals(e.target.value)}
-          placeholder="Nhập token decimals"
           disabled={true}
         />
       </div>

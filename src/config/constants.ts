@@ -10,7 +10,7 @@ export const DEFAULT_BATCH_SIZE = 5;
 
 export const MIN_BALANCE_THRESHOLD = parseEther('0.0001'); 
 
-export const SLIPPAGE_TOLERANCE_BASIS_POINTS = 700;
+export const SLIPPAGE_TOLERANCE_BASIS_POINTS = 1000;
 
 export const ONE_HUNDRED_PERCENT = 10000; // 10,000 basis points represent 100%
 

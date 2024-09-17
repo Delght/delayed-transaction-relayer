@@ -1,10 +1,8 @@
-// Third-party imports
 import TinyQueue from "tinyqueue";
 import { Mutex } from "async-mutex";
 import { encodeFunctionData } from "viem";
 import type { Account, PrivateKeyAccount, PublicClient, WalletClient } from "viem";
 
-// Local imports
 import Observer from "../../utils/observer";
 import { logger } from "../../utils/logger";
 import { ChainData, ChainId } from "../../config/chains";
@@ -22,10 +20,11 @@ import type {
   TrackedTransaction,
   TransactionManagerParams
 } from "../../types/types";
+
 export class TransactionManager {
   private static instance: TransactionManager | null = null;
 
-  private queue: TinyQueue<QueuedTransaction>;
+  private readonly queue: TinyQueue<QueuedTransaction>;
   private readonly accounts: Array<{ account: PrivateKeyAccount, walletClient: WalletClient}>;
   private readonly client: PublicClient;
   private readonly queueInterval: number;
@@ -56,11 +55,7 @@ export class TransactionManager {
     this.removalSetMutex = new Mutex();
     this.monitorPendingTxsInterval = params.monitorPendingTxsInterval || 1000;
     this.delayedQueue = [];
-    const chainData = ChainData[this.chainId];
-    if (!chainData) {
-      throw new Error(`Chain data not found for chain ID: ${this.chainId}`);
-    }
-    this.calculator = params.calculator || new TransactionDataCalculator(this.client, chainData.uniswapRouterV2);
+  this.calculator = params.calculator || new TransactionDataCalculator(this.client, ChainData[this.chainId]?.uniswapRouterV2 || ChainData[1].uniswapRouterV2);
   }
 
   public static getInstance(params: TransactionManagerParams): TransactionManager {
@@ -117,9 +112,6 @@ export class TransactionManager {
     while (true) {
       await this.queueMutex.runExclusive(() => {
         if (this.queue.length === 0 && this.delayedQueue.length === 0) {
-          // logger.info(
-          //   "TransactionManager.processQueue: Both main and delayed queues are empty, waiting for transactions to be added"
-          // );
           return; // Exit early if both queues are empty
         }
       });
@@ -257,8 +249,6 @@ export class TransactionManager {
 
         // Adjust the index after splicing
         i--;
-
-        // logger.info(`TransactionManager.requeueDelayedTransactions: Moved delayed transaction ${delayedTx.txData.functionName} back to main queue`);
       }
     }
   }
@@ -584,10 +574,6 @@ export class TransactionManager {
     const newMinAmount =
       this.calculator.calculateMinAmountWithSlippage(currentAmountOut);
     queuedTransaction.txData.args[minAmountIndex] = newMinAmount;
-
-    // logger.info(
-    //   `Transaction recalculated for function: ${queuedTransaction.txData.functionName}, new min amount: ${newMinAmount}`
-    // );
 
     return queuedTransaction.txData;
   }
