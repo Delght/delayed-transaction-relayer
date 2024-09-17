@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import classNames from 'classnames';
 import BigNumber from 'bignumber.js';
 import { erc20Abi, getContract, parseUnits } from 'viem';
@@ -10,7 +10,7 @@ import { generateShortId } from '../utils/function';
 import Button from './components/Button';
 import SellAccountRow from './components/SellAccountRow';
 import useAppConfig from './hooks/useAppConfig';
-import { ApproveParam, SellOrApproveMonitor, SubAccountWithAmount } from './type';
+import { ApproveParam, SellOrApproveMonitor, SubAccountWithPercentageAndAmount } from './type';
 
 export default function SellConfig({
   onPrev,
@@ -21,27 +21,33 @@ export default function SellConfig({
 }) {
   const { subAccounts, tokenInfo, handleSell, handleApprove,chainId } = useAppConfig();
 
-  const subAccountsWithAmount = useMemo<SubAccountWithAmount[]>(() => {
-    return subAccounts
+  const [subAccountsWithPercentage, setSubAccountsWithPercentage] = useState<
+    SubAccountWithPercentageAndAmount[]
+  >(
+    subAccounts
       .filter(account => new BigNumber(account.balanceToken).isGreaterThan(0))
       .map(account => ({
         ...account,
-        amount: new BigNumber(account.balanceToken).toFixed(18),
-      }));
-  }, [subAccounts]);
+        percentage: '100',
+        amount: account.balanceToken,
+      }))
+  );
 
-  const [subAccountsWithAmountLocal, setSubAccountsWithAmountLocal] = useState<
-    SubAccountWithAmount[]
-  >(subAccountsWithAmount);
-  console.log(subAccountsWithAmountLocal);
-
-  const onChangeAmount = (address: string, amount: string) => {
-    const clone = [...subAccountsWithAmountLocal];
-    const index = clone.findIndex(account => account.address === address);
-    if (index !== -1) {
-      clone[index].amount = amount;
-      setSubAccountsWithAmountLocal(clone);
-    }
+  const onChangePercentage = (address: string, percentage: string) => {
+    const numPercentage = Number(percentage);
+    if (isNaN(numPercentage) || numPercentage < 0 || numPercentage > 100) return;
+  
+    setSubAccountsWithPercentage(prev => 
+      prev.map(account => 
+        account.address === address
+          ? {
+              ...account,
+              percentage,
+              amount: new BigNumber(account.balanceToken).multipliedBy(percentage).dividedBy(100).toFixed(18),
+            }
+          : account
+      )
+    );
   };
 
   const onSell = async () => {
@@ -53,17 +59,13 @@ export default function SellConfig({
       client: publicClient,
     });
 
-    const sellParams = subAccountsWithAmountLocal
-      .filter(
-        account => account?.amount && !Number.isNaN(Number(account.amount)) && Number(account.amount) > 0
-      )
-      .map(account => {
-        return {
-          id: generateShortId(),
-          address: account.address,
-          amountToSell: parseUnits(account.amount, tokenInfo.decimals),
-        };
-      });
+    const sellParams = subAccountsWithPercentage
+      .filter(account => Number(account.percentage) > 0)
+      .map(account => ({
+        id: generateShortId(),
+        address: account.address,
+        amountToSell: parseUnits(account.amount, tokenInfo.decimals),
+      }));
 
     const allowances = await Promise.all(
       sellParams.map(async sellParam => {
@@ -144,24 +146,21 @@ export default function SellConfig({
       </div>
       <div className="mt-[20px] flex flex-col w-full max-w-[Min(1200px,90vw)] border-2">
         <div className={classNames('flex items-center')}>
-          <div className="w-[25%] p-[10px] font-bold">Ví phụ</div>
-          <div className="w-[25%] border-l-2 p-[10px] font-bold">Số dư ETH</div>
-          <div className="w-[25%] border-l-2 p-[10px] font-bold">
-            Số dư {tokenInfo.symbol}
-          </div>
-          <div className="w-[25%] border-l-2 p-[10px] font-bold">
-            Số lượng {tokenInfo.symbol} bán
-          </div>
+          <div className="w-[20%] p-[10px] font-bold">Ví phụ</div>
+          <div className="w-[20%] border-l-2 p-[10px] font-bold">Số dư ETH</div>
+          <div className="w-[20%] border-l-2 p-[10px] font-bold">Số dư {tokenInfo.symbol}</div>
+          <div className="w-[20%] border-l-2 p-[10px] font-bold">Phần trăm bán (%)</div>
+          <div className="w-[20%] border-l-2 p-[10px] font-bold">Số lượng {tokenInfo.symbol} bán</div>
         </div>
-        {subAccountsWithAmountLocal.map(account => (
+        {subAccountsWithPercentage.map(account => (
           <SellAccountRow
             key={account.address}
             account={account}
-            onChangeAmount={(add, val) => onChangeAmount(add, val)}
+            onChangePercentage={(add, val) => onChangePercentage(add, val)}
           />
         ))}
       </div>
-      <Button onClick={() => onSell()}>Bán</Button>
+      <Button onClick={onSell}>Bán</Button>
     </div>
   );
 }

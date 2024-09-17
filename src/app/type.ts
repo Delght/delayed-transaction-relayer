@@ -58,6 +58,9 @@ export type SubAccount = AddressKeyPair & {
   balanceTokenWei: bigint;
 };
 
-export type SubAccountWithAmount = SubAccount & {
+export type SubAccountWithPercentageAndAmount = SubAccount & {
+  percentage: string;
   amount: string;
 };
+
+
