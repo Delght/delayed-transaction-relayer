@@ -4,18 +4,17 @@ import BigNumber from 'bignumber.js';
 import toast from 'react-hot-toast';
 import { encodeFunctionData, parseEther } from 'viem';
 
-import { ChainData } from '../config/chains';
-import { DisperseAbi } from '../config/disperse';
-import { renderTokenAmount } from '../utils/function';
-import { sendTransaction } from '../utils/transaction';
+import { ChainData } from '@/config/chains';
+import { DisperseAbi } from '@/config/disperse';
+import { renderTokenAmount } from '@/utils/function';
+import { sendTransaction } from '@/utils/transaction';
 
-import Button from './components/Button';
-import Input from './components/Input';
-import Loading from './components/Loading';
-import TransferAccountRow from './components/TransferAccountRow';
-import useAppConfig from './hooks/useAppConfig';
-import useBalance from './hooks/useBalance';
-
+import Button from '@/app/components/Button';
+import Input from '@/app/components/Input';
+import Loading from '@/app/components/Loading';
+import TransferAccountRow from '@/app/components/TransferAccountRow';
+import useAppConfig from '@/app/hooks/useAppConfig';
+import useBalance from '@/app/hooks/useBalance';
 
 export default function TransferBalance({
   onNext,

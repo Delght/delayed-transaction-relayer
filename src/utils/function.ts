@@ -1,4 +1,4 @@
-import { ChainData, ChainId } from '../config/chains';
+import { ChainData, ChainId } from '@/config/chains';
 
 
 export const isPrivateKey = (privateKey: string) => {

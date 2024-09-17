@@ -1,6 +1,6 @@
-import { getPublicClient, getWalletClient } from '../client';
+import { getPublicClient, getWalletClient } from '@/client';
 import BigNumber from 'bignumber.js'
-import { ChainId } from '../config/chains';
+import { ChainId } from '@/config/chains';
 export const sendTransaction = async ({
   privateKey,
   to,

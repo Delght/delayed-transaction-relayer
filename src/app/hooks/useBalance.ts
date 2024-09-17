@@ -1,9 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
-import { getPublicClient } from '../../client';
-import { erc20Abi, formatEther, formatUnits, getContract } from 'viem';
 import { useMemo } from 'react';
-import useAppConfig from './useAppConfig';
-import { ChainId } from '../../config/chains';
+import { useQuery } from '@tanstack/react-query';
+import { erc20Abi, formatEther, formatUnits, getContract } from 'viem';
+
+import { getPublicClient } from '@/client';
+import { ChainId } from '@/config/chains';
+import useAppConfig from '@/app/hooks/useAppConfig';
 
 export type AccountBalance = {
   balanceWei: bigint;

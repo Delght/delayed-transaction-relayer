@@ -1,12 +1,12 @@
 import classNames from 'classnames';
-import useAppConfig from './hooks/useAppConfig';
-import SellMonitorRow from './components/SellMonitorRow';
+import useAppConfig from '@/app/hooks/useAppConfig';
+import SellMonitorRow from '@/app/components/SellMonitorRow';
 
 export default function SellMonitor({ onPrev }: { onPrev: () => void }) {
   const { sellMonitors, tokenInfo } = useAppConfig();
 
   return (
-    <div className="w-full flex flex-col justify-center items-center">
+    <div className="flex flex-col items-center justify-center w-full">
       <h1 className="text-2xl font-bold text-center text-[rgb(252,114,255)]">
         Theo dõi giao dịch bán
       </h1>

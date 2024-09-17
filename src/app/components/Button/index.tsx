@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import React from 'react';
-import Loading from '../Loading';
+import Loading from '@/app/components/Loading';
 
 const Button = React.forwardRef<
   HTMLButtonElement,

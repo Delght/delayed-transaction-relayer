@@ -1,7 +1,7 @@
 import classNames from 'classnames';
-import { ellipsisAddress, renderTokenAmount } from '../../../utils/function';
-import useAppConfig from '../../hooks/useAppConfig';
-import { SubAccount } from '../../type';
+import useAppConfig from '@/app/hooks/useAppConfig';
+import { SubAccount } from '@/app/type';
+import { ellipsisAddress, renderTokenAmount } from '@/utils/function';
 
 export default function TransferAccountRow({
   account,

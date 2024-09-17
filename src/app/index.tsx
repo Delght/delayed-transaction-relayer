@@ -2,25 +2,25 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { erc20Abi, formatEther, formatUnits, getContract } from 'viem';
 import { privateKeyToAccount, nonceManager } from 'viem/accounts';
 
-import { getPublicClient, getWalletClient } from '../client';
-import { ChainId, ChainsSupported, ChainData } from '../config/chains';
-import { DEFAULT_BLOCK_TIME, DEFAULT_MAX_RETRIES, DEFAULT_BATCH_SIZE } from '../config/constants';
-import { TransactionManager } from '../modules/transaction/transaction';
-import { UniswapV2 } from '../modules/trading/uniswapV2';
-import { AddressKeyPair } from '../utils/generate';
+import { getPublicClient, getWalletClient } from '@/client';
+import { ChainId, ChainsSupported, ChainData } from '@/config/chains';
+import { DEFAULT_BLOCK_TIME, DEFAULT_MAX_RETRIES, DEFAULT_BATCH_SIZE } from '@/config/constants';
+import { TransactionManager } from '@/modules/transaction/transaction';
+import { UniswapV2 } from '@/modules/trading/uniswapV2';
+import { AddressKeyPair } from '@/utils/generate';
 
-import { AppContext } from './context';
-import Config from './config';
-import ChooseMethod from './choose-method';
-import BuyConfig from './buy-config';
-import BuyMonitor from './buy-monitor';
-import ImportSubAccounts from './import-sub-accounts';
-import SellConfig from './sell-config';
-import SellMonitor from './sell-monitor';
-import TransferBalance from './transfer-balance';
-import WithdrawConfig from './withdraw-config';
-import WithdrawMonitor from './withdraw-monitor';
-import Loading from './components/Loading';
+import { AppContext } from '@/app/context';
+import Config from '@/app/config';
+import ChooseMethod from '@/app/choose-method';
+import BuyConfig from '@/app/buy-config';
+import BuyMonitor from '@/app/buy-monitor';
+import ImportSubAccounts from '@/app/import-sub-accounts';
+import SellConfig from '@/app/sell-config';
+import SellMonitor from '@/app/sell-monitor';
+import TransferBalance from '@/app/transfer-balance';
+import WithdrawConfig from '@/app/withdraw-config';
+import WithdrawMonitor from '@/app/withdraw-monitor';
+import Loading from '@/app/components/Loading';
 import {
   ApproveParam,
   BuyParam,
@@ -29,7 +29,7 @@ import {
   SubAccount,
   TokenInfo,
   WithdrawParam,
-} from './type';
+} from '@/app/type';
 
 enum Step {
   Config = 'config',
@@ -64,6 +64,13 @@ export default function App() {
   const [buyMonitors, setBuyMonitors] = useState<BuyParam[]>([]);
   const [sellMonitors, setSellMonitors] = useState<SellOrApproveMonitor[]>([]);
   const [withdrawMonitors, setWithdrawMonitors] = useState<WithdrawParam[]>([]);
+
+  const updateBalancesAndMoveTo = async (nextStep: Step) => {
+    setLoading(true);
+    await getBalances();
+    setLoading(false);
+    setStep(nextStep);
+  };
 
   const getBalances = useCallback(async () => {
     if (!tokenInfo || !subAccountsKey.length || !chainId) {
@@ -306,9 +313,8 @@ export default function App() {
           )}
           {step === Step.BuyMonitor && (
             <BuyMonitor
-              onPrev={() => {
-                setStep(Step.Config);
-              }}
+              onPrev={() => setStep(Step.Config)}
+              onSell={() => updateBalancesAndMoveTo(Step.Sell)}
             />
           )}
           {step === Step.Sell && (

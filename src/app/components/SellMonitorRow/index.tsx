@@ -1,16 +1,13 @@
-import classNames from 'classnames';
-import {
-  ellipsisAddress,
-  renderTokenAmount,
-  viewTransaction,
-} from '../../../utils/function';
-import useAppConfig from '../../hooks/useAppConfig';
-import useBalance from '../../hooks/useBalance';
-import Loading from '../Loading';
-import { formatUnits } from 'viem';
 import { useEffect, useState } from 'react';
-import Observer from '../../../utils/observer';
-import { SellOrApproveMonitor } from '../../type';
+import classNames from 'classnames';
+import { formatUnits } from 'viem';
+
+import { ellipsisAddress, renderTokenAmount, viewTransaction } from '@/utils/function';
+import Observer from '@/utils/observer';
+import useAppConfig from '@/app/hooks/useAppConfig';
+import useBalance from '@/app/hooks/useBalance';
+import Loading from '@/app/components/Loading';
+import { SellOrApproveMonitor } from '@/app/type';
 
 export default function SellMonitorRow({
   sellParam,

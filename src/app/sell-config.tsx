@@ -3,14 +3,14 @@ import classNames from 'classnames';
 import BigNumber from 'bignumber.js';
 import { erc20Abi, getContract, parseUnits } from 'viem';
 
-import { getPublicClient } from '../client';
-import { ChainData } from '../config/chains';
-import { generateShortId } from '../utils/function';
+import { getPublicClient } from '@/client';
+import { ChainData } from '@/config/chains';
+import { generateShortId } from '@/utils/function';
 
-import Button from './components/Button';
-import SellAccountRow from './components/SellAccountRow';
-import useAppConfig from './hooks/useAppConfig';
-import { ApproveParam, SellOrApproveMonitor, SubAccountWithPercentageAndAmount } from './type';
+import Button from '@/app/components/Button';
+import SellAccountRow from '@/app/components/SellAccountRow';
+import useAppConfig from '@/app/hooks/useAppConfig';
+import { ApproveParam, SellOrApproveMonitor, SubAccountWithPercentageAndAmount } from '@/app/type';
 
 export default function SellConfig({
   onPrev,

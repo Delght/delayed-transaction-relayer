@@ -1,4 +1,4 @@
-import Button from './components/Button';
+import Button from '@/app/components/Button';
 
 export default function ChooseMethod({
   onPrev,
@@ -12,7 +12,7 @@ export default function ChooseMethod({
   onWithdraw: () => void;
 }) {
   return (
-    <div className="w-full flex flex-col justify-center items-center">
+    <div className="flex flex-col items-center justify-center w-full">
       <h1 className="text-2xl font-bold text-center text-[rgb(252,114,255)]">
         Chọn giao dịch
       </h1>

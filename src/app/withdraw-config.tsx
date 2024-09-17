@@ -3,13 +3,12 @@ import classNames from 'classnames';
 import BigNumber from 'bignumber.js';
 import { parseEther } from 'viem';
 
-import { MIN_BALANCE_THRESHOLD } from '../config/constants';
-import { generateShortId } from '../utils/function';
-
-import Button from './components/Button';
-import WithdrawAccountRow from './components/WithdrawAccountRow';
-import useAppConfig from './hooks/useAppConfig';
-import { SubAccountWithAmount, WithdrawParam } from './type';
+import { MIN_BALANCE_THRESHOLD } from '@/config/constants';
+import { generateShortId } from '@/utils/function';
+import Button from '@/app/components/Button';
+import WithdrawAccountRow from '@/app/components/WithdrawAccountRow';
+import useAppConfig from '@/app/hooks/useAppConfig';
+import { SubAccountWithAmount, WithdrawParam } from '@/app/type';
 
 export default function WithdrawConfig({
   onPrev,

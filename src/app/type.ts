@@ -1,5 +1,5 @@
-import { ChainId } from '../config/chains';
-import { AddressKeyPair } from '../utils/generate';
+import { ChainId } from '@/config/chains';
+import { AddressKeyPair } from '@/utils/generate';
 
 export type TokenInfo = {
   address: `0x${string}`;

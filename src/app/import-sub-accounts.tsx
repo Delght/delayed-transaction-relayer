@@ -1,12 +1,12 @@
 import { useState } from 'react';
 
-import { getContentFile, parseJSON, renderTokenAmount } from '../utils/function';
-import { AddressKeyPair, generateAddressesAndKeys } from '../utils/generate';
+import { getContentFile, parseJSON, renderTokenAmount } from '@/utils/function';
+import { AddressKeyPair, generateAddressesAndKeys } from '@/utils/generate';
 
-import Button from './components/Button';
-import Loading from './components/Loading';
-import useAppConfig from './hooks/useAppConfig';
-import useBalance from './hooks/useBalance';
+import Button from '@/app/components/Button';
+import Loading from '@/app/components/Loading';
+import useAppConfig from '@/app/hooks/useAppConfig';
+import useBalance from '@/app/hooks/useBalance';
 
 export default function ImportSubAccounts({
   onNext,

@@ -1,18 +1,14 @@
-import { PublicClient } from 'viem';
-import type { PrivateKeyAccount, Abi } from 'viem';
+import { PublicClient, type PrivateKeyAccount, type Abi } from 'viem';
 
-import { ChainData, ChainId } from '../../config/chains';
+import { ChainData, ChainId } from '@/config/chains';
 import {
   UNISWAP_V2_ROUTER_ABI,
   ERC20_ABI,
   MAX_UINT256,
   GAS_TRANSFER_LIMIT,
-} from '../../config/constants';
-import { TransactionManager } from '../../modules/transaction/transaction';
-import type {
-  TransactionData,
-  TransactionWithDeadline,
-} from '../../types/types';
+} from '@/config/constants';
+import { TransactionManager } from '@/modules/transaction/transaction';
+import type { TransactionData, TransactionWithDeadline } from '@/types';
 
 export class UniswapV2 {
   private client: PublicClient;

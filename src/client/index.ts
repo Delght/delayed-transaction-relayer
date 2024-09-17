@@ -1,6 +1,6 @@
 import { createPublicClient, createWalletClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { ChainData, ChainId } from '../config/chains';
+import { ChainData, ChainId } from '@/config/chains';
 
 export const getPublicClient = (chainId: ChainId = 11155111) => {
   const chainData = ChainData[chainId]

@@ -3,14 +3,14 @@ import classNames from 'classnames';
 import BigNumber from 'bignumber.js';
 import { parseEther } from 'viem';
 
-import { MIN_BALANCE_THRESHOLD } from '../config/constants';
-import { generateShortId, randomNumber } from '../utils/function';
+import { MIN_BALANCE_THRESHOLD } from '@/config/constants';
+import { generateShortId, randomNumber } from '@/utils/function';
 
-import Button from './components/Button';
-import BuyAccountRow from './components/BuyAccountRow';
-import Input from './components/Input';
-import useAppConfig from './hooks/useAppConfig';
-import { BuyParam, SubAccountWithAmount } from './type';
+import Button from '@/app/components/Button';
+import BuyAccountRow from '@/app/components/BuyAccountRow';
+import Input from '@/app/components/Input';
+import useAppConfig from '@/app/hooks/useAppConfig';
+import { BuyParam, SubAccountWithAmount } from '@/app/type';
 
 const minDefault = 0.005;
 const maxDefault = 0.01;

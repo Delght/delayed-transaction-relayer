@@ -1,8 +1,9 @@
 import classNames from 'classnames';
-import useAppConfig from './hooks/useAppConfig';
-import BuyMonitorRow from './components/BuyMonitorRow';
+import useAppConfig from '@/app/hooks/useAppConfig';
+import BuyMonitorRow from '@/app/components/BuyMonitorRow';
+import Button from '@/app/components/Button';
 
-export default function BuyMonitor({ onPrev }: { onPrev: () => void }) {
+export default function BuyMonitor({ onPrev, onSell }: { onPrev: () => void; onSell: () => void }) {
   const { buyMonitors, tokenInfo } = useAppConfig();
 
   return (
@@ -47,13 +48,12 @@ export default function BuyMonitor({ onPrev }: { onPrev: () => void }) {
           />
         ))}
       </div>
-      {/* <Button
-        onClick={() => {
-          onBuy();
-        }}
+      <Button
+        className="mt-[20px]"
+        onClick={onSell}
       >
-        Buy
-      </Button> */}
+        Bán token
+      </Button>
     </div>
   );
 }

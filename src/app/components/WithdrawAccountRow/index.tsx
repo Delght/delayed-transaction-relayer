@@ -1,6 +1,6 @@
 import classNames from 'classnames';
-import { ellipsisAddress, renderTokenAmount } from '../../../utils/function';
-import { SubAccountWithAmount } from '../../type';
+import { ellipsisAddress, renderTokenAmount } from '@/utils/function';
+import { SubAccountWithAmount } from '@/app/type';
 
 export default function WithdrawAccountRow({
   account,

@@ -1,11 +1,11 @@
 import classNames from 'classnames';
+import useAppConfig from '@/app/hooks/useAppConfig';
 import {
   ellipsisAddress,
   randomNumber,
   renderTokenAmount,
-} from '../../../utils/function';
-import useAppConfig from '../../hooks/useAppConfig';
-import { SubAccountWithAmount } from '../../type';
+} from '@/utils/function';
+import { SubAccountWithAmount } from '@/app/type';
 
 export default function BuyAccountRow({
   account,

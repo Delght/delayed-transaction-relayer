@@ -1,15 +1,12 @@
-import classNames from 'classnames';
-import {
-  ellipsisAddress,
-  renderTokenAmount,
-  viewTransaction,
-} from '../../../utils/function';
-import useBalance from '../../hooks/useBalance';
-import useAppConfig from '../../hooks/useAppConfig';
-import Loading from '../Loading';
 import { useEffect, useState } from 'react';
-import Observer from '../../../utils/observer';
-import { WithdrawParam } from '../../type';
+import classNames from 'classnames';
+
+import { ellipsisAddress, renderTokenAmount, viewTransaction } from '@/utils/function';
+import Observer from '@/utils/observer';
+import useBalance from '@/app/hooks/useBalance';
+import useAppConfig from '@/app/hooks/useAppConfig';
+import Loading from '@/app/components/Loading';
+import { WithdrawParam } from '@/app/type';
 
 export default function WithdrawMonitorRow({
   withdrawParam,

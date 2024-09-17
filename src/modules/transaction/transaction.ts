@@ -3,23 +3,23 @@ import { Mutex } from "async-mutex";
 import { encodeFunctionData } from "viem";
 import type { Account, PrivateKeyAccount, PublicClient, WalletClient } from "viem";
 
-import Observer from "../../utils/observer";
-import { logger } from "../../utils/logger";
-import { ChainData, ChainId } from "../../config/chains";
+import Observer from "@/utils/observer";
+import { logger } from "@/utils/logger";
+import { ChainData, ChainId } from "@/config/chains";
 import {
   GAS_PRICE_MULTIPLIER,
   GAS_LIMIT_MULTIPLIER,
   GAS_TRANSFER_LIMIT,
   MAX_PRIORITY_FEE_PER_GAS
-} from "../../config/constants";
-import { TransactionDataCalculator } from "./calculator";
+} from "@/config/constants";
+import { TransactionDataCalculator } from "@/modules/transaction/calculator";
 import type {
   TransactionData,
   TransactionWithDeadline,
   QueuedTransaction,
   TrackedTransaction,
   TransactionManagerParams
-} from "../../types/types";
+} from "@/types";
 
 export class TransactionManager {
   private static instance: TransactionManager | null = null;
@@ -55,7 +55,7 @@ export class TransactionManager {
     this.removalSetMutex = new Mutex();
     this.monitorPendingTxsInterval = params.monitorPendingTxsInterval || 1000;
     this.delayedQueue = [];
-  this.calculator = params.calculator || new TransactionDataCalculator(this.client, ChainData[this.chainId]?.uniswapRouterV2 || ChainData[1].uniswapRouterV2);
+    this.calculator = params.calculator || new TransactionDataCalculator(this.client, ChainData[this.chainId]?.uniswapRouterV2 || ChainData[1].uniswapRouterV2);
   }
 
   public static getInstance(params: TransactionManagerParams): TransactionManager {

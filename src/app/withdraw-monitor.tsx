@@ -1,9 +1,11 @@
 import classNames from 'classnames';
-import useAppConfig from './hooks/useAppConfig';
-import useBalance from './hooks/useBalance';
-import { renderTokenAmount } from '../utils/function';
-import Loading from './components/Loading';
-import WithdrawMonitorRow from './components/WithdrawMonitorRow';
+
+import useAppConfig from '@/app/hooks/useAppConfig';
+import useBalance from '@/app/hooks/useBalance';
+import Loading from '@/app/components/Loading';
+import WithdrawMonitorRow from '@/app/components/WithdrawMonitorRow';
+
+import { renderTokenAmount } from '@/utils/function';
 
 export default function WithdrawMonitor({ onPrev }: { onPrev: () => void }) {
   const { withdrawMonitors, mainAccount } = useAppConfig();
@@ -11,7 +13,7 @@ export default function WithdrawMonitor({ onPrev }: { onPrev: () => void }) {
     useBalance(mainAccount.address);
 
   return (
-    <div className="w-full flex flex-col justify-center items-center">
+    <div className="flex flex-col items-center justify-center w-full">
       <h1 className="text-2xl font-bold text-center text-[rgb(252,114,255)]">
         Theo dõi giao dịch rút ETH
       </h1>

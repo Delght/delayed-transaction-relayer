@@ -1,12 +1,10 @@
 import ReactDOM from 'react-dom/client';
-import './index.scss';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import {
-  QueryClient,
-  QueryClientProvider,
-} from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'react-hot-toast';
+
 import App from './app';
-import { Toaster } from 'react-hot-toast'
+import './index.scss';
 
 const queryClient = new QueryClient()
 

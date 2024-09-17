@@ -1,16 +1,13 @@
-import classNames from 'classnames';
-import {
-  ellipsisAddress,
-  renderTokenAmount,
-  viewTransaction,
-} from '../../../utils/function';
-import useAppConfig from '../../hooks/useAppConfig';
-import { BuyParam } from '../../type';
-import useBalance from '../../hooks/useBalance';
-import Loading from '../Loading';
-import { formatEther } from 'viem';
 import { useEffect, useState } from 'react';
-import Observer from '../../../utils/observer';
+import classNames from 'classnames';
+import { formatEther } from 'viem';
+
+import { ellipsisAddress, renderTokenAmount, viewTransaction } from '@/utils/function';
+import Observer from '@/utils/observer';
+import useAppConfig from '@/app/hooks/useAppConfig';
+import useBalance from '@/app/hooks/useBalance';
+import Loading from '@/app/components/Loading';
+import { BuyParam } from '@/app/type';
 
 export default function BuyMonitorRow({ buyParam }: { buyParam: BuyParam }) {
   const { tokenInfo, chainId } = useAppConfig();
