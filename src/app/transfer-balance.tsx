@@ -17,10 +17,8 @@ import useAppConfig from '@/app/hooks/useAppConfig';
 import useBalance from '@/app/hooks/useBalance';
 
 export default function TransferBalance({
-  onNext,
   onPrev,
 }: {
-  onNext: () => void;
   onPrev: () => void;
 }) {
   const { mainAccount, subAccounts, tokenInfo, reloadBalance, chainId } = useAppConfig();
@@ -216,14 +214,6 @@ export default function TransferBalance({
       >
         Chuyển ETH sang ví phụ ({renderTokenAmount(formatData.totalNative)} ETH)
         {/* {renderTokenAmount(formatData.totalToken)} {tokenInfo.symbol}) */}
-      </Button>
-      <Button
-        onClick={() => {
-          onNext();
-        }}
-        disabled={loading}
-      >
-        Bước tiếp theo
       </Button>
     </div>
   );

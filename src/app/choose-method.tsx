@@ -2,11 +2,13 @@ import Button from '@/app/components/Button';
 
 export default function ChooseMethod({
   onPrev,
+  onDisperse,
   onBuy,
   onSell,
   onWithdraw,
 }: {
   onPrev: () => void;
+  onDisperse: () => void;
   onBuy: () => void;
   onSell: () => void;
   onWithdraw: () => void;
@@ -27,7 +29,10 @@ export default function ChooseMethod({
 
       <div className="text-base mt-[20px]">Chọn giao dịch mua, bán hoặc rút ETH</div>
       <div className="w-full flex items-center justify-center max-w-[500px] gap-[20px]">
-        <div className='w-full max-w-[30%]'>
+        <div className='w-full max-w-[25%]'>
+          <Button onClick={onDisperse}>Chuyển ETH</Button>
+        </div>
+        <div className='w-full max-w-[25%]'>
           <Button
             onClick={() => {
               onBuy();
@@ -36,7 +41,7 @@ export default function ChooseMethod({
             Mua
           </Button>
         </div>
-        <div className='w-full max-w-[30%]'>
+        <div className='w-full max-w-[25%]'>
           <Button
             onClick={() => {
               onSell();
@@ -45,7 +50,7 @@ export default function ChooseMethod({
             Bán
           </Button>
         </div>
-        <div className='w-full max-w-[30%]'>
+        <div className='w-full max-w-[25%]'>
           <Button
             onClick={() => {
               onWithdraw();

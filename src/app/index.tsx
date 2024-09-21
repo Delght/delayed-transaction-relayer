@@ -34,13 +34,13 @@ import {
 enum Step {
   Config = 'config',
   ImportSubAccount = 'import-sub-account',
-  Disperse = 'disperse',
   ChooseMethod = 'choose-method',
+  Disperse = 'disperse',
   Buy = 'buy',
   Sell = 'sell',
+  Withdraw = 'withdraw',
   BuyMonitor = 'buy-monitor',
   SellMonitor = 'sell-monitor',
-  Withdraw = 'withdraw',
   WithdrawMonitor = 'withdraw-monitor',
 }
 
@@ -130,7 +130,7 @@ export default function App() {
       queueInterval: (ChainData[chainId]?.blockTime ?? DEFAULT_BLOCK_TIME) * 1000,
       maxRetries: DEFAULT_MAX_RETRIES,
       batchSize: DEFAULT_BATCH_SIZE,
-      monitorPendingTxsInterval: ChainData[chainId]?.blockTime ?? DEFAULT_BLOCK_TIME, 
+      monitorPendingTxsInterval: (ChainData[chainId]?.blockTime ?? DEFAULT_BLOCK_TIME) * 1000, 
       chainId,
     });
     
@@ -267,7 +267,7 @@ export default function App() {
             <ImportSubAccounts
               onNext={accounts => {
                 setSubAccountsKey(accounts);
-                setStep(Step.Disperse);
+                setStep(Step.ChooseMethod);
               }}
               onPrev={() => {
                 setStep(Step.Config);
@@ -276,17 +276,17 @@ export default function App() {
           )}
           {step === Step.Disperse && (
             <TransferBalance
-              onNext={() => {
-                setStep(Step.ChooseMethod);
-              }}
               onPrev={() => {
-                setStep(Step.ImportSubAccount);
+                setStep(Step.ChooseMethod);
               }}
             />
           )}
           {step === Step.ChooseMethod && (
             <ChooseMethod
               onPrev={() => {
+                setStep(Step.ImportSubAccount);
+              }}
+              onDisperse={() => {
                 setStep(Step.Disperse);
               }}
               onBuy={() => {
