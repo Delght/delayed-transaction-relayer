@@ -1,6 +1,6 @@
 import type { Abi, PrivateKeyAccount, PublicClient, WalletClient } from 'viem';
-import { TransactionDataCalculator } from '../modules/transaction/calculator';
-import { ChainId } from '../config/chains';
+import { TransactionDataCalculator } from '@/core/transaction/calculator';
+import { ChainId } from '@/config/chains';
 
 export interface TransactionData {
   address: `0x${string}`,

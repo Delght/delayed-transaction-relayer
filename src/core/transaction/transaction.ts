@@ -12,14 +12,14 @@ import {
   GAS_TRANSFER_LIMIT,
   MAX_PRIORITY_FEE_PER_GAS
 } from "@/config/constants";
-import { TransactionDataCalculator } from "@/modules/transaction/calculator";
+import { TransactionDataCalculator } from "@/core/transaction/calculator";
 import type {
   TransactionData,
   TransactionWithDeadline,
   QueuedTransaction,
   TrackedTransaction,
   TransactionManagerParams
-} from "@/types";
+} from "@/core/types";
 
 export class TransactionManager {
   private static instance: TransactionManager | null = null;

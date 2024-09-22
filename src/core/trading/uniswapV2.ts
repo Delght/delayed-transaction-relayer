@@ -6,8 +6,8 @@ import {
   MAX_UINT256,
   GAS_TRANSFER_LIMIT,
 } from '@/config/constants';
-import { TransactionManager } from '@/modules/transaction/transaction';
-import type { TransactionData, TransactionWithDeadline } from '@/types';
+import { TransactionManager } from '@/core/transaction/transaction';
+import type { TransactionData, TransactionWithDeadline } from '@/core/types';
 
 export class UniswapV2 {
   private client: PublicClient;

@@ -6,8 +6,8 @@ import { getPublicClient, getWalletClient } from '@/client';
 import { multicall3Abi } from '@/config/abis';
 import { ChainId, ChainsSupported, ChainData } from '@/config/chains';
 import { DEFAULT_BLOCK_TIME, DEFAULT_MAX_RETRIES, DEFAULT_BATCH_SIZE } from '@/config/constants';
-import { TransactionManager } from '@/modules/transaction/transaction';
-import { UniswapV2 } from '@/modules/trading/uniswapV2';
+import { TransactionManager } from '@/core/transaction/transaction';
+import { UniswapV2 } from '@/core/trading/uniswapV2';
 import { AddressKeyPair } from '@/utils/generate';
 
 import { AppContext } from '@/app/context';
