@@ -1,9 +1,9 @@
 import type { PublicClient } from 'viem';
+import { uniswapV2RouterAbi } from '@/config/abis';
 import {
-  UNISWAP_V2_ROUTER_ABI, 
   SLIPPAGE_TOLERANCE_BASIS_POINTS,
   ONE_HUNDRED_PERCENT,
-} from '../../config/constants';
+} from '@/config/constants';
 
 
 export class TransactionDataCalculator {
@@ -18,7 +18,7 @@ export class TransactionDataCalculator {
     public async getAmountsOut(amountIn: bigint, path: `0x${string}`[]): Promise<bigint> {
       const amountsOut = await this.client.readContract({
         address: this.uniswapRouterAddress,
-        abi: UNISWAP_V2_ROUTER_ABI,
+        abi: uniswapV2RouterAbi,
         functionName: 'getAmountsOut',
         args: [amountIn, path],
       }) as bigint[];

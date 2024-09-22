@@ -276,16 +276,31 @@ export class TransactionManager {
    */
   private async getTransactionsToProcess(): Promise<QueuedTransaction[]> {
     const transactionsToProcess: QueuedTransaction[] = [];
+    let swapCount = 0;
 
     await this.queueMutex.runExclusive(() => {
       while (
         this.queue.length > 0 &&
         transactionsToProcess.length < this.batchSize
       ) {
-        const nextTx = this.queue.pop();
+        const nextTx = this.queue.peek();
 
-        if (nextTx) {
-          transactionsToProcess.push(nextTx);
+        if (!nextTx) {
+          break;
+        }
+
+        const isSwapFunction =  nextTx.txData.functionName === 'swapExactETHForTokens' ||  nextTx.txData.functionName === 'swapExactTokensForETH';
+
+        if (isSwapFunction && swapCount >= this.batchSize) {
+          break;
+        }
+
+        this.queue.pop();
+
+        transactionsToProcess.push(nextTx);
+
+        if (isSwapFunction) {
+          swapCount++;
         }
 
         // if (this.removalSet.has(nextTx.txData.txHash)) {

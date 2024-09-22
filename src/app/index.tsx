@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { erc20Abi, formatEther, formatUnits, getContract } from 'viem';
+import { erc20Abi, encodeFunctionData, formatEther, formatUnits, getContract } from 'viem';
 import { privateKeyToAccount, nonceManager } from 'viem/accounts';
 
 import { getPublicClient, getWalletClient } from '@/client';
+import { multicall3Abi } from '@/config/abis';
 import { ChainId, ChainsSupported, ChainData } from '@/config/chains';
 import { DEFAULT_BLOCK_TIME, DEFAULT_MAX_RETRIES, DEFAULT_BATCH_SIZE } from '@/config/constants';
 import { TransactionManager } from '@/modules/transaction/transaction';
@@ -29,6 +30,7 @@ import {
   SubAccount,
   TokenInfo,
   WithdrawParam,
+  Result
 } from '@/app/type';
 
 enum Step {
@@ -72,37 +74,102 @@ export default function App() {
     setStep(nextStep);
   };
 
+  // const getBalances = useCallback(async () => {
+  //   if (!tokenInfo || !subAccountsKey.length || !chainId) {
+  //     return [];
+  //   }
+  //   setLoading(true);
+  //   const publicClient = getPublicClient(chainId);
+  //   const erc20Contract = getContract({
+  //     abi: erc20Abi,
+  //     address: tokenInfo.address,
+  //     client: publicClient,
+  //   });
+  //   const accounts = await Promise.all(
+  //     subAccountsKey.map(async account => {
+  //       const [balance, balanceToken] = await Promise.all([
+  //         publicClient.getBalance({
+  //           address: account.address,
+  //         }),
+  //         erc20Contract.read.balanceOf([account.address]),
+  //       ]);
+  //       return {
+  //         ...account,
+  //         balanceWei: balance,
+  //         balance: formatEther(balance),
+  //         balanceToken: formatUnits(balanceToken, tokenInfo.decimals),
+  //         balanceTokenWei: balanceToken,
+  //       };
+  //     })
+  //   );
+  //   setLoading(false);
+  //   setSubAccounts(accounts);
+  // }, [subAccountsKey, tokenInfo, chainId]);
+
   const getBalances = useCallback(async () => {
     if (!tokenInfo || !subAccountsKey.length || !chainId) {
       return [];
     }
     setLoading(true);
+    
     const publicClient = getPublicClient(chainId);
-    const erc20Contract = getContract({
-      abi: erc20Abi,
-      address: tokenInfo.address,
+    
+    const multicallAddress = ChainData[chainId].multicallAddress;
+    const multicallContract = getContract({
+      address: multicallAddress,
+      abi: multicall3Abi,
       client: publicClient,
     });
-    const accounts = await Promise.all(
-      subAccountsKey.map(async account => {
-        const [balance, balanceToken] = await Promise.all([
-          publicClient.getBalance({
-            address: account.address,
-          }),
-          erc20Contract.read.balanceOf([account.address]),
-        ]);
-        return {
-          ...account,
-          balanceWei: balance,
-          balance: formatEther(balance),
-          balanceToken: formatUnits(balanceToken, tokenInfo.decimals),
-          balanceTokenWei: balanceToken,
-        };
-      })
-    );
+  
+    const calls = subAccountsKey.flatMap(account => [
+      {
+        target: multicallAddress,
+        allowFailure: true,
+        callData: encodeFunctionData({
+          abi: [{ 
+            name: 'getEthBalance', 
+            type: 'function', 
+            stateMutability: 'view', 
+            inputs: [{ name: 'addr', type: 'address' }], 
+            outputs: [{ type: 'uint256' }] 
+          }],
+          functionName: 'getEthBalance',
+          args: [account.address],
+        }),
+      },
+      {
+        target: tokenInfo.address,
+        allowFailure: true,
+        callData: encodeFunctionData({
+          abi: erc20Abi,
+          functionName: 'balanceOf',
+          args: [account.address],
+        }),
+      },
+    ]);
+  
+    const results = (await multicallContract.read.aggregate3([calls])) as Result[];
+  
+    const accounts = subAccountsKey.map((account, index) => {
+      const balanceResult = results[index * 2];
+      const tokenBalanceResult = results[index * 2 + 1];
+  
+      const balance = balanceResult.success ? BigInt(balanceResult.returnData) : 0n;
+      const balanceToken = tokenBalanceResult.success ? BigInt(tokenBalanceResult.returnData) : 0n;
+  
+      return {
+        ...account,
+        balanceWei: balance,
+        balance: formatEther(balance),
+        balanceToken: formatUnits(balanceToken, tokenInfo.decimals),
+        balanceTokenWei: balanceToken,
+      };
+    });
+  
     setLoading(false);
     setSubAccounts(accounts);
   }, [subAccountsKey, tokenInfo, chainId]);
+
 
   useEffect(() => {
     (async () => {

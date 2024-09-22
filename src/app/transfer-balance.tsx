@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { encodeFunctionData, parseEther } from 'viem';
 
 import { ChainData } from '@/config/chains';
-import { DisperseAbi } from '@/config/disperse';
+import { DisperseAbi } from '@/config/abis';
 import { renderTokenAmount } from '@/utils/function';
 import { sendTransaction } from '@/utils/transaction';
 

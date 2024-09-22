@@ -1,9 +1,8 @@
 import { PublicClient, type PrivateKeyAccount, type Abi } from 'viem';
 
+import { uniswapV2RouterAbi, erc20Abi } from '@/config/abis';
 import { ChainData, ChainId } from '@/config/chains';
 import {
-  UNISWAP_V2_ROUTER_ABI,
-  ERC20_ABI,
   MAX_UINT256,
   GAS_TRANSFER_LIMIT,
 } from '@/config/constants';
@@ -35,7 +34,7 @@ export class UniswapV2 {
   ): TransactionData {
     return {
       address: ChainData[this.chainId].uniswapRouterV2,
-      abi: UNISWAP_V2_ROUTER_ABI as Abi,
+      abi: uniswapV2RouterAbi as Abi,
       functionName,
       args,
       value,
@@ -48,7 +47,7 @@ export class UniswapV2 {
   ): TransactionData {
     return {
       address: this.tokenAddress,
-      abi: ERC20_ABI as Abi,
+      abi: erc20Abi as Abi,
       functionName,
       args,
     };
