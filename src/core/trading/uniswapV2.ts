@@ -152,7 +152,7 @@ export class UniswapV2 {
         address: accountPair.account.address,
       });
       const { maxFeePerGas } = await this.client.estimateFeesPerGas()
-      const gasPrice = BigInt(Math.floor(Number(maxFeePerGas) * 1.15)); // Special case for transferAllToMain
+      const gasPrice = BigInt(Math.floor(Number(maxFeePerGas) * 1.10)); // Special case for transferAllToMain
       const gasLimit = BigInt(GAS_TRANSFER_LIMIT);
       const gasCost = gasPrice * gasLimit ;
 

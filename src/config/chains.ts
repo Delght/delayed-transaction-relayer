@@ -1,7 +1,7 @@
 import { Chain } from 'viem';
-import { mainnet, sepolia, base } from 'viem/chains';
+import { mainnet, sepolia, base, optimism } from 'viem/chains';
 
-export type ChainId = 11155111 | 1 | 8453;
+export type ChainId = 11155111 | 1 | 8453 | 10;
 
 export const ChainData: Record<
   ChainId,
@@ -31,6 +31,19 @@ export const ChainData: Record<
     disperseAddress: '0xD152f549545093347A162Dce210e7293f1452150',
     multicallAddress: '0xcA11bde05977b3631167028862bE2a173976CA11',
     blockTime: 12
+  },
+  10: {
+    chainId: 10,
+    chainName: 'Optimism',
+    rpcUrl: 'https://optimism.blockpi.network/v1/rpc/public',
+    nativeSymbol: 'ETH',
+    viemChain: optimism,
+    explorer: 'https://optimistic.etherscan.io',
+    uniswapRouterV2: '0x4A7b5Da61326A6379179b40d00F57E5bbDC962c2',
+    wethAddress: '0x4200000000000000000000000000000000000006',
+    disperseAddress: '0xD152f549545093347A162Dce210e7293f1452150',
+    multicallAddress: '0xcA11bde05977b3631167028862bE2a173976CA11',
+    blockTime: 2
   },
   8453: {
     chainId: 8453,
